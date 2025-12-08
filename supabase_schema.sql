@@ -27,7 +27,7 @@ CREATE TABLE preferences (
   id SERIAL PRIMARY KEY,
   teacher_id INTEGER NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
   year INTEGER NOT NULL,
-  first_choice_grade INTEGER,
+  first_choice_grade INTEGER,  -- 교과전담 선택 시 NULL 가능
   second_choice_grade INTEGER,
   third_choice_grade INTEGER,
   wants_grade_head BOOLEAN DEFAULT FALSE,
@@ -116,4 +116,7 @@ CREATE POLICY "Enable all for authenticated users" ON assignment_logs
 
 CREATE POLICY "Enable all for authenticated users" ON admin_settings
   FOR ALL USING (true);
+
+     git config --global user.email 'yaco9304@gmail.com'
+   git config --global user.name yaco93'
 

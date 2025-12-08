@@ -30,7 +30,7 @@ class Preference(Base):
   id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
   teacher_id: Mapped[int] = mapped_column(ForeignKey("teachers.id"))
   year: Mapped[int] = mapped_column(Integer, index=True)
-  first_choice_grade: Mapped[int] = mapped_column(Integer)
+  first_choice_grade: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 교과전담 선택 시 null
   second_choice_grade: Mapped[int | None] = mapped_column(Integer, nullable=True)
   third_choice_grade: Mapped[int | None] = mapped_column(Integer, nullable=True)
   wants_grade_head: Mapped[bool] = mapped_column(Boolean, default=False)  # 학년부장 희망
