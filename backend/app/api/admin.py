@@ -460,3 +460,67 @@ async def export_assignments(
     headers={"Content-Disposition": f'attachment; filename="assignments_{year}.csv"'},
   )
 
+
+@router.get("/preferences")
+async def list_preferences(
+  year: int,
+  session: AsyncSession = Depends(get_session),
+  user=Depends(get_current_user),
+):
+  """제출한 사람들의 명단과 지망 정보 조회"""
+  if user.get("role") != "admin":
+    raise HTTPException(status_code=403, detail="admin only")
+  
+  stmt = (
+    select(
+      models.Preference.id,
+      models.Preference.teacher_id,
+      models.Preference.first_choice_grade,
+      models.Preference.second_choice_grade,
+      models.Preference.third_choice_grade,
+      models.Preference.wants_grade_head,
+      models.Preference.wants_subject_teacher,
+      models.Preference.wants_duty_head,
+      models.Teacher.name,
+    )
+    .join(models.Teacher, models.Teacher.id == models.Preference.teacher_id)
+    .where(models.Preference.year == year)
+    .order_by(models.Teacher.name)
+  )
+  res = await session.execute(stmt)
+  rows = res.all()
+  
+  return [
+    {
+      "id": r.id,
+      "teacher_id": r.teacher_id,
+      "teacher_name": r.name,
+      "first_choice_grade": r.first_choice_grade,
+      "second_choice_grade": r.second_choice_grade,
+      "third_choice_grade": r.third_choice_grade,
+      "wants_grade_head": r.wants_grade_head,
+      "wants_subject_teacher": r.wants_subject_teacher,
+      "wants_duty_head": r.wants_duty_head,
+    }
+    for r in rows
+  ]
+
+
+@router.delete("/preferences")
+async def clear_preferences(
+  year: int,
+  session: AsyncSession = Depends(get_session),
+  user=Depends(get_current_user),
+):
+  """특정 연도의 모든 희망 초기화"""
+  if user.get("role") != "admin":
+    raise HTTPException(status_code=403, detail="admin only")
+  
+  # 해당 연도의 모든 희망 삭제
+  deleted = await session.execute(
+    models.Preference.__table__.delete().where(models.Preference.year == year)
+  )
+  await session.commit()
+  
+  return {"status": "ok", "message": f"{year}년도 희망서가 모두 초기화되었습니다.", "deleted_count": deleted.rowcount}
+

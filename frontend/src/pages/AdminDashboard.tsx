@@ -88,6 +88,28 @@ export default function AdminDashboard() {
     },
   });
 
+  // 제출 명단 조회
+  const { data: preferencesData, refetch: refetchPreferences } = useQuery({
+    queryKey: ["preferences", YEAR],
+    queryFn: async () => {
+      const res = await api.get("/admin/preferences", { params: { year: YEAR } });
+      return res.data;
+    },
+  });
+
+  // 희망 초기화
+  const clearPreferencesMutation = useMutation({
+    mutationFn: async () => api.delete("/admin/preferences", { params: { year: YEAR } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dashboard", YEAR] });
+      qc.invalidateQueries({ queryKey: ["preferences", YEAR] });
+      alert("희망서가 모두 초기화되었습니다.");
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.detail || "초기화 중 오류가 발생했습니다.");
+    },
+  });
+
   if (isLoading) {
     return (
       <div>
@@ -398,9 +420,32 @@ export default function AdminDashboard() {
                   cursor: "pointer",
                   fontSize: "1rem",
                   fontWeight: "600",
+                  marginBottom: "0.5rem",
                 }}
               >
                 현황 보기
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm("모든 교사의 희망서를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+                    clearPreferencesMutation.mutate();
+                  }
+                }}
+                disabled={clearPreferencesMutation.status === "pending"}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  backgroundColor: "#f44336",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: clearPreferencesMutation.status === "pending" ? "not-allowed" : "pointer",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  opacity: clearPreferencesMutation.status === "pending" ? 0.6 : 1,
+                }}
+              >
+                {clearPreferencesMutation.status === "pending" ? "초기화 중..." : "희망서 초기화"}
               </button>
             </div>
 
@@ -581,6 +626,109 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* 제출 명단 */}
+        <div style={{ marginTop: "2rem" }}>
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "1.5rem",
+              borderRadius: "8px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: "600" }}>제출 명단</h3>
+              <button
+                onClick={() => refetchPreferences()}
+                style={{
+                  padding: "0.5rem 1rem",
+                  backgroundColor: "#f5f5f5",
+                  color: "#333",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
+                }}
+              >
+                새로고침
+              </button>
+            </div>
+            {preferencesData && preferencesData.length > 0 ? (
+              <div style={{ overflowX: "auto" }}>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  <thead>
+                    <tr style={{ backgroundColor: "#f0f0f0" }}>
+                      <th style={{ padding: "0.75rem", border: "1px solid #ddd", textAlign: "center", minWidth: "100px" }}>
+                        교사명
+                      </th>
+                      <th style={{ padding: "0.75rem", border: "1px solid #ddd", textAlign: "center", minWidth: "100px" }}>
+                        1지망
+                      </th>
+                      <th style={{ padding: "0.75rem", border: "1px solid #ddd", textAlign: "center", minWidth: "100px" }}>
+                        2지망
+                      </th>
+                      <th style={{ padding: "0.75rem", border: "1px solid #ddd", textAlign: "center", minWidth: "100px" }}>
+                        3지망
+                      </th>
+                      <th style={{ padding: "0.75rem", border: "1px solid #ddd", textAlign: "center", minWidth: "120px" }}>
+                        추가 희망
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {preferencesData.map((pref: any) => (
+                      <tr key={pref.id}>
+                        <td style={{ padding: "0.75rem", border: "1px solid #ddd", textAlign: "center" }}>
+                          {pref.teacher_name}
+                        </td>
+                        <td style={{ padding: "0.75rem", border: "1px solid #ddd", textAlign: "center" }}>
+                          {pref.first_choice_grade
+                            ? `${pref.first_choice_grade}학년`
+                            : pref.wants_subject_teacher
+                            ? "교과전담"
+                            : "-"}
+                        </td>
+                        <td style={{ padding: "0.75rem", border: "1px solid #ddd", textAlign: "center" }}>
+                          {pref.second_choice_grade
+                            ? `${pref.second_choice_grade}학년`
+                            : pref.second_choice_grade === null && pref.first_choice_grade
+                            ? "교과전담"
+                            : "-"}
+                        </td>
+                        <td style={{ padding: "0.75rem", border: "1px solid #ddd", textAlign: "center" }}>
+                          {pref.third_choice_grade
+                            ? `${pref.third_choice_grade}학년`
+                            : pref.third_choice_grade === null && pref.second_choice_grade === null && pref.first_choice_grade
+                            ? "교과전담"
+                            : "-"}
+                        </td>
+                        <td style={{ padding: "0.75rem", border: "1px solid #ddd", textAlign: "center", fontSize: "0.85rem" }}>
+                          {[
+                            pref.wants_grade_head && "학년부장",
+                            pref.wants_duty_head && "업무부장",
+                          ]
+                            .filter(Boolean)
+                            .join(", ") || "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{ padding: "2rem", textAlign: "center", color: "#999" }}>
+                아직 제출된 희망서가 없습니다.
+              </div>
+            )}
           </div>
         </div>
       </div>
