@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.db import get_session
 from app import models
-from app.schemas import GradeSettingIn, AssignmentOut, AdminSettingIn, AdminSettingOut
+from app.schemas import GradeSettingIn, AssignmentOut, AdminSettingIn, AdminSettingOut, ClosePreferenceRequest
 from app.assignment.engine import run_assignment
 from app.core.security import get_current_user
 from fastapi.responses import StreamingResponse
