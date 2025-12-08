@@ -269,6 +269,8 @@ export default function MyPreferencePage() {
     onSuccess: () => {
       console.log("Preference submission success");
       qc.invalidateQueries({ queryKey: ["pref", YEAR] });
+      qc.invalidateQueries({ queryKey: ["preferences", YEAR] }); // 관리자 제출 명단 쿼리도 무효화
+      qc.invalidateQueries({ queryKey: ["dashboard", YEAR] }); // 대시보드 쿼리도 무효화
       setSubmitted(true);
       setStep(3);
     },

@@ -89,12 +89,13 @@ export default function AdminDashboard() {
   });
 
   // 제출 명단 조회
-  const { data: preferencesData, refetch: refetchPreferences } = useQuery({
+  const { data: preferencesData, refetch: refetchPreferences, isLoading: isLoadingPreferences } = useQuery({
     queryKey: ["preferences", YEAR],
     queryFn: async () => {
       const res = await api.get("/admin/preferences", { params: { year: YEAR } });
       return res.data;
     },
+    refetchInterval: 30000, // 30초마다 자동 새로고침
   });
 
   // 희망 초기화
@@ -640,23 +641,29 @@ export default function AdminDashboard() {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <h3 style={{ fontSize: "1.2rem", fontWeight: "600" }}>제출 명단</h3>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: "600" }}>
+                제출 명단 {preferencesData && `(${preferencesData.length}명)`}
+              </h3>
               <button
                 onClick={() => refetchPreferences()}
+                disabled={isLoadingPreferences}
                 style={{
                   padding: "0.5rem 1rem",
-                  backgroundColor: "#f5f5f5",
+                  backgroundColor: isLoadingPreferences ? "#e0e0e0" : "#f5f5f5",
                   color: "#333",
                   border: "1px solid #ddd",
                   borderRadius: "4px",
-                  cursor: "pointer",
+                  cursor: isLoadingPreferences ? "not-allowed" : "pointer",
                   fontSize: "0.9rem",
+                  opacity: isLoadingPreferences ? 0.6 : 1,
                 }}
               >
-                새로고침
+                {isLoadingPreferences ? "새로고침 중..." : "새로고침"}
               </button>
             </div>
-            {preferencesData && preferencesData.length > 0 ? (
+            {isLoadingPreferences ? (
+              <div style={{ padding: "2rem", textAlign: "center", color: "#999" }}>로딩 중...</div>
+            ) : preferencesData && preferencesData.length > 0 ? (
               <div style={{ overflowX: "auto" }}>
                 <table
                   style={{
