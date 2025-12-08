@@ -195,21 +195,30 @@ export default function MyPreferencePage() {
         ? `업무부장: ${dutyHeadDetailInStep2.trim()}` 
         : null;
 
-      return api.post("/preferences/me", {
+      const payload = {
         year: YEAR,
-        first_choice_grade: subjectInFirst ? null : Number(first),
-        second_choice_grade: subjectInSecond ? null : second === "" ? null : Number(second),
-        third_choice_grade: subjectInThird ? null : third === "" ? null : Number(third),
+        first_choice_grade: subjectInFirst ? null : (typeof first === "number" ? first : Number(first)),
+        second_choice_grade: subjectInSecond ? null : (second === "" ? null : typeof second === "number" ? second : Number(second)),
+        third_choice_grade: subjectInThird ? null : (third === "" ? null : typeof third === "number" ? third : Number(third)),
         wants_grade_head: wantsGradeHead,
         wants_subject_teacher: wantsSubjectTeacher,
         wants_duty_head: wantsDutyHead,
         comment: comment,
-      });
+      };
+      
+      console.log("Submitting preference:", payload);
+      return api.post("/preferences/me", payload);
     },
     onSuccess: () => {
+      console.log("Preference submission success");
       qc.invalidateQueries({ queryKey: ["pref", YEAR] });
       setSubmitted(true);
       setStep(3);
+    },
+    onError: (error: any) => {
+      console.error("Preference submission error:", error);
+      const errorMessage = error.response?.data?.detail || error.message || "제출 중 오류가 발생했습니다.";
+      alert(errorMessage);
     },
   });
 
@@ -491,7 +500,7 @@ export default function MyPreferencePage() {
                           onChange={(e) => setWantsGradeHeadInStep1(e.target.checked)}
                           style={{ width: "18px", height: "18px", cursor: "pointer" }}
                         />
-                        <span style={{ fontSize: "0.95rem" }}>학년부장 희망</span>
+                        <span style={{ fontSize: "0.95rem" }}>학년부장</span>
                       </label>
                     </div>
                   </>
@@ -667,7 +676,7 @@ export default function MyPreferencePage() {
                       checked={wantsGradeHead}
                       onChange={(e) => setWantsGradeHead(e.target.checked)}
                     />
-                    <span>학년부장 희망</span>
+                    <span>학년부장</span>
                   </label>
                   {(first === "subject" || second === "subject" || third === "subject") && (
                     <div style={{ marginLeft: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -791,7 +800,7 @@ export default function MyPreferencePage() {
                 )}
                 {(wantsGradeHead || first === "subject" || second === "subject" || third === "subject") && (
                   <div style={{ marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px solid #e0e0e0" }}>
-                    {wantsGradeHead && <div style={{ color: "#666" }}>• 학년부장 희망</div>}
+                    {wantsGradeHead && <div style={{ color: "#666" }}>• 학년부장</div>}
                     {(first === "subject" || second === "subject" || third === "subject") && (
                       <div style={{ color: "#666" }}>
                         • 교과전담 희망
