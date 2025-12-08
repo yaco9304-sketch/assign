@@ -37,6 +37,39 @@ export default function MyPreferencePage() {
   const [newHistoryYear, setNewHistoryYear] = useState<number | "">("");
   const [newHistoryGrade, setNewHistoryGrade] = useState<number | "">("");
 
+  // 동일 학년을 2번 이상 담임한 학년 목록 계산
+  const getBannedGrades = (): Set<number> => {
+    const gradeCounts: { [key: number]: number } = {};
+    gradeHistory.forEach((h) => {
+      gradeCounts[h.grade] = (gradeCounts[h.grade] || 0) + 1;
+    });
+    const banned = new Set<number>();
+    Object.entries(gradeCounts).forEach(([grade, count]) => {
+      if (count >= 2) {
+        banned.add(Number(grade));
+      }
+    });
+    return banned;
+  };
+
+  const bannedGrades = getBannedGrades();
+
+  // 제한된 학년이 선택되어 있으면 초기화
+  useEffect(() => {
+    if (typeof first === "number" && bannedGrades.has(first)) {
+      setFirst(1);
+      alert(`${first}학년은 동일 학년을 2번 이상 담임하셔서 선택할 수 없습니다. 다른 학년을 선택해주세요.`);
+    }
+    if (typeof second === "number" && bannedGrades.has(second)) {
+      setSecond("");
+      alert(`${second}학년은 동일 학년을 2번 이상 담임하셔서 선택할 수 없습니다.`);
+    }
+    if (typeof third === "number" && bannedGrades.has(third)) {
+      setThird("");
+      alert(`${third}학년은 동일 학년을 2번 이상 담임하셔서 선택할 수 없습니다.`);
+    }
+  }, [bannedGrades.size, gradeHistory.length]);
+
   // teacherData가 로드되면 폼에 값 설정
   useEffect(() => {
     if (teacherData) {
@@ -724,9 +757,51 @@ export default function MyPreferencePage() {
             }}
           >
             <h3 style={{ marginBottom: "1.5rem", fontSize: "1.3rem", fontWeight: "600" }}>희망 학년 입력</h3>
+            
+            {/* 제한된 학년 안내 */}
+            {bannedGrades.size > 0 && (
+              <div
+                style={{
+                  marginBottom: "1.5rem",
+                  padding: "1rem",
+                  backgroundColor: "#fff3cd",
+                  border: "1px solid #ffc107",
+                  borderRadius: "4px",
+                  color: "#856404",
+                }}
+              >
+                <div style={{ fontWeight: "600", marginBottom: "0.5rem" }}>⚠️ 선택 불가능한 학년</div>
+                <div style={{ fontSize: "0.9rem" }}>
+                  본교에서 동일 학년을 2번 이상 담임하신 학년은 선택할 수 없습니다:{" "}
+                  {Array.from(bannedGrades)
+                    .sort()
+                    .map((g) => `${g}학년`)
+                    .join(", ")}
+                </div>
+              </div>
+            )}
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                // 제한된 학년 체크
+                const firstGrade = typeof first === "number" ? first : null;
+                const secondGrade = typeof second === "number" ? second : null;
+                const thirdGrade = typeof third === "number" ? third : null;
+                
+                if (firstGrade && bannedGrades.has(firstGrade)) {
+                  alert(`${firstGrade}학년은 동일 학년을 2번 이상 담임하셔서 선택할 수 없습니다.`);
+                  return;
+                }
+                if (secondGrade && bannedGrades.has(secondGrade)) {
+                  alert(`${secondGrade}학년은 동일 학년을 2번 이상 담임하셔서 선택할 수 없습니다.`);
+                  return;
+                }
+                if (thirdGrade && bannedGrades.has(thirdGrade)) {
+                  alert(`${thirdGrade}학년은 동일 학년을 2번 이상 담임하셔서 선택할 수 없습니다.`);
+                  return;
+                }
+                
                 mutation.mutate();
               }}
             >
@@ -735,7 +810,19 @@ export default function MyPreferencePage() {
                   <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>1지망</label>
                   <select
                     value={first}
-                    onChange={(e) => setFirst(e.target.value === "subject" ? "subject" : Number(e.target.value))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "subject") {
+                        setFirst("subject");
+                      } else {
+                        const grade = Number(value);
+                        if (bannedGrades.has(grade)) {
+                          alert(`${grade}학년은 동일 학년을 2번 이상 담임하셔서 선택할 수 없습니다.`);
+                          return;
+                        }
+                        setFirst(grade);
+                      }
+                    }}
                     style={{
                       width: "100%",
                       padding: "0.75rem",
@@ -745,8 +832,8 @@ export default function MyPreferencePage() {
                     }}
                   >
                     {[1, 2, 3, 4, 5, 6].map((g) => (
-                      <option key={g} value={g}>
-                        {g}학년
+                      <option key={g} value={g} disabled={bannedGrades.has(g)}>
+                        {g}학년 {bannedGrades.has(g) ? "(선택 불가)" : ""}
                       </option>
                     ))}
                     <option value="subject">교과전담</option>
@@ -756,9 +843,21 @@ export default function MyPreferencePage() {
                   <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>2지망</label>
                   <select
                     value={second}
-                    onChange={(e) =>
-                      setSecond(e.target.value === "" ? "" : e.target.value === "subject" ? "subject" : Number(e.target.value))
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "") {
+                        setSecond("");
+                      } else if (value === "subject") {
+                        setSecond("subject");
+                      } else {
+                        const grade = Number(value);
+                        if (bannedGrades.has(grade)) {
+                          alert(`${grade}학년은 동일 학년을 2번 이상 담임하셔서 선택할 수 없습니다.`);
+                          return;
+                        }
+                        setSecond(grade);
+                      }
+                    }}
                     style={{
                       width: "100%",
                       padding: "0.75rem",
@@ -769,8 +868,8 @@ export default function MyPreferencePage() {
                   >
                     <option value="">선택 안 함</option>
                     {[1, 2, 3, 4, 5, 6].map((g) => (
-                      <option key={g} value={g}>
-                        {g}학년
+                      <option key={g} value={g} disabled={bannedGrades.has(g)}>
+                        {g}학년 {bannedGrades.has(g) ? "(선택 불가)" : ""}
                       </option>
                     ))}
                     <option value="subject">교과전담</option>
@@ -780,9 +879,21 @@ export default function MyPreferencePage() {
                   <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>3지망</label>
                   <select
                     value={third}
-                    onChange={(e) =>
-                      setThird(e.target.value === "" ? "" : e.target.value === "subject" ? "subject" : Number(e.target.value))
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "") {
+                        setThird("");
+                      } else if (value === "subject") {
+                        setThird("subject");
+                      } else {
+                        const grade = Number(value);
+                        if (bannedGrades.has(grade)) {
+                          alert(`${grade}학년은 동일 학년을 2번 이상 담임하셔서 선택할 수 없습니다.`);
+                          return;
+                        }
+                        setThird(grade);
+                      }
+                    }}
                     style={{
                       width: "100%",
                       padding: "0.75rem",
@@ -793,8 +904,8 @@ export default function MyPreferencePage() {
                   >
                     <option value="">선택 안 함</option>
                     {[1, 2, 3, 4, 5, 6].map((g) => (
-                      <option key={g} value={g}>
-                        {g}학년
+                      <option key={g} value={g} disabled={bannedGrades.has(g)}>
+                        {g}학년 {bannedGrades.has(g) ? "(선택 불가)" : ""}
                       </option>
                     ))}
                     <option value="subject">교과전담</option>
