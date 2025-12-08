@@ -776,6 +776,25 @@ export default function MyPreferencePage() {
 
         {/* Step 2: 지망 입력 */}
         {step === 2 && (
+          <>
+            {isClosed && (
+              <div
+                style={{
+                  backgroundColor: "#ffebee",
+                  border: "1px solid #ef5350",
+                  borderRadius: "4px",
+                  padding: "1rem",
+                  marginBottom: "1.5rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                <span style={{ color: "#c62828", fontSize: "0.95rem", fontWeight: "500" }}>
+                  ⚠️ 희망 제출이 마감되었습니다. 더 이상 입력하거나 수정할 수 없습니다.
+                </span>
+              </div>
+            )}
           <div
             style={{
               backgroundColor: "white",
@@ -851,12 +870,15 @@ export default function MyPreferencePage() {
                         setFirst(grade);
                       }
                     }}
+                    disabled={isClosed}
                     style={{
                       width: "100%",
                       padding: "0.75rem",
                       border: "1px solid #ddd",
                       borderRadius: "4px",
                       fontSize: "1rem",
+                      backgroundColor: isClosed ? "#f5f5f5" : "white",
+                      cursor: isClosed ? "not-allowed" : "pointer",
                     }}
                   >
                     {[1, 2, 3, 4, 5, 6].map((g) => (
@@ -886,12 +908,15 @@ export default function MyPreferencePage() {
                         setSecond(grade);
                       }
                     }}
+                    disabled={isClosed}
                     style={{
                       width: "100%",
                       padding: "0.75rem",
                       border: "1px solid #ddd",
                       borderRadius: "4px",
                       fontSize: "1rem",
+                      backgroundColor: isClosed ? "#f5f5f5" : "white",
+                      cursor: isClosed ? "not-allowed" : "pointer",
                     }}
                   >
                     <option value="">선택 안 함</option>
@@ -922,12 +947,15 @@ export default function MyPreferencePage() {
                         setThird(grade);
                       }
                     }}
+                    disabled={isClosed}
                     style={{
                       width: "100%",
                       padding: "0.75rem",
                       border: "1px solid #ddd",
                       borderRadius: "4px",
                       fontSize: "1rem",
+                      backgroundColor: isClosed ? "#f5f5f5" : "white",
+                      cursor: isClosed ? "not-allowed" : "pointer",
                     }}
                   >
                     <option value="">선택 안 함</option>
@@ -957,6 +985,8 @@ export default function MyPreferencePage() {
                       type="checkbox"
                       checked={wantsGradeHead}
                       onChange={(e) => setWantsGradeHead(e.target.checked)}
+                      disabled={isClosed}
+                      style={{ cursor: isClosed ? "not-allowed" : "pointer" }}
                     />
                     <span>학년부장</span>
                   </label>
@@ -972,6 +1002,8 @@ export default function MyPreferencePage() {
                               setDutyHeadDetailInStep2("");
                             }
                           }}
+                          disabled={isClosed}
+                          style={{ cursor: isClosed ? "not-allowed" : "pointer" }}
                         />
                         <span>업무부장 희망</span>
                       </label>
@@ -1013,23 +1045,41 @@ export default function MyPreferencePage() {
                 >
                   이전 단계
                 </button>
-                <button
-                  type="submit"
-                  disabled={mutation.status === "pending"}
-                  style={{
-                    flex: 1,
-                    padding: "0.75rem",
-                    backgroundColor: "#2196f3",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: mutation.status === "pending" ? "not-allowed" : "pointer",
-                    fontSize: "1rem",
-                    fontWeight: "600",
-                  }}
-                >
-                  {mutation.status === "pending" ? "제출 중..." : "제출하기"}
-                </button>
+                {isClosed ? (
+                  <div
+                    style={{
+                      flex: 1,
+                      padding: "0.75rem",
+                      backgroundColor: "#ffebee",
+                      color: "#c62828",
+                      border: "1px solid #ef5350",
+                      borderRadius: "4px",
+                      textAlign: "center",
+                      fontSize: "1rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    희망 제출이 마감되었습니다.
+                  </div>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={mutation.status === "pending"}
+                    style={{
+                      flex: 1,
+                      padding: "0.75rem",
+                      backgroundColor: "#2196f3",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: mutation.status === "pending" ? "not-allowed" : "pointer",
+                      fontSize: "1rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {mutation.status === "pending" ? "제출 중..." : "제출하기"}
+                  </button>
+                )}
               </div>
             </form>
           </div>
