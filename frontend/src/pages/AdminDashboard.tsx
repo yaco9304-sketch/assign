@@ -30,6 +30,18 @@ export default function AdminDashboard() {
     retry: 1,
   });
 
+  const dashboardDataWithDefaults = dashboardData || {
+    year: YEAR,
+    total_teachers: 0,
+    submitted_count: 0,
+    required_homerooms: 0,
+    grade_class_counts: {},
+    first_choice_counts: {},
+    second_choice_counts: {},
+    third_choice_counts: {},
+    is_closed: false,
+  };
+
   useEffect(() => {
     if (dashboardDataWithDefaults && dashboardDataWithDefaults.total_teachers) {
       setTotalTeachersInput(dashboardDataWithDefaults.total_teachers);
@@ -206,18 +218,6 @@ export default function AdminDashboard() {
       </div>
     );
   }
-
-  const dashboardDataWithDefaults = dashboardData || {
-    year: YEAR,
-    total_teachers: 0,
-    submitted_count: 0,
-    required_homerooms: 0,
-    grade_class_counts: {},
-    first_choice_counts: {},
-    second_choice_counts: {},
-    third_choice_counts: {},
-    is_closed: false,
-  };
 
   const submissionRate = dashboardDataWithDefaults.total_teachers > 0 ? Math.round((dashboardDataWithDefaults.submitted_count / dashboardDataWithDefaults.total_teachers) * 100) : 0;
   const notSubmitted = dashboardDataWithDefaults.total_teachers - dashboardDataWithDefaults.submitted_count;
