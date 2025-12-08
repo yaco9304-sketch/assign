@@ -14,11 +14,13 @@ export default function AdminDashboard() {
   const [uploadResult, setUploadResult] = useState<{ success_count: number; error_count: number; errors: string[] } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data, isLoading, error } = useQuery({
+  const { data: dashboardData, isLoading, error, refetch: refetchDashboard } = useQuery({
     queryKey: ["dashboard", YEAR],
     queryFn: async () => {
       try {
         const res = await api.get("/admin/dashboard", { params: { year: YEAR } });
+        console.log("Dashboard data loaded:", res.data);
+        console.log("is_closed:", res.data.is_closed);
         return res.data;
       } catch (err: any) {
         console.error("Dashboard API error:", err);
@@ -29,10 +31,10 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    if (data && data.total_teachers) {
-      setTotalTeachersInput(data.total_teachers);
+    if (dashboardData && dashboardData.total_teachers) {
+      setTotalTeachersInput(dashboardData.total_teachers);
     }
-  }, [data]);
+  }, [dashboardData]);
 
   const updateTotalTeachersMutation = useMutation({
     mutationFn: async (total: number) =>
@@ -120,16 +122,22 @@ export default function AdminDashboard() {
 
   // 마감 설정/해제
   const closePreferenceMutation = useMutation({
-    mutationFn: async (payload: { year: number; is_closed: boolean }) =>
-      api.put("/admin/preferences/close", payload),
+    mutationFn: async (payload: { year: number; is_closed: boolean }) => {
+      console.log("마감 설정 요청:", payload);
+      const res = await api.put("/admin/preferences/close", payload);
+      console.log("마감 설정 응답:", res.data);
+      return res;
+    },
     onSuccess: async (response) => {
       const data = response.data;
+      console.log("마감 설정 성공, 새로운 상태:", data);
       // 쿼리 무효화 및 즉시 재조회
-      await qc.invalidateQueries({ queryKey: ["dashboard", YEAR] });
-      await qc.refetchQueries({ queryKey: ["dashboard", YEAR] });
+      qc.invalidateQueries({ queryKey: ["dashboard", YEAR] });
+      await refetchDashboard();
       alert(data.is_closed ? "희망 제출이 마감되었습니다." : "희망 제출 마감이 해제되었습니다.");
     },
     onError: (err: any) => {
+      console.error("마감 설정 오류:", err);
       alert(err.response?.data?.detail || "마감 설정 중 오류가 발생했습니다.");
     },
   });
@@ -475,6 +483,7 @@ export default function AdminDashboard() {
               <button
                 onClick={() => {
                   const isCurrentlyClosed = dashboardData?.is_closed || false;
+                  console.log("현재 마감 상태:", isCurrentlyClosed);
                   const action = isCurrentlyClosed ? "해제" : "마감";
                   if (confirm(`희망 제출을 ${action}하시겠습니까?`)) {
                     closePreferenceMutation.mutate({ year: YEAR, is_closed: !isCurrentlyClosed });
@@ -500,6 +509,11 @@ export default function AdminDashboard() {
                   ? "마감 해제"
                   : "희망 제출 마감"}
               </button>
+              {dashboardData && (
+                <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "#666" }}>
+                  현재 상태: {dashboardData.is_closed ? "마감됨" : "마감 안됨"}
+                </div>
+              )}
             </div>
 
             <div
