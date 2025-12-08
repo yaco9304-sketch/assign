@@ -122,9 +122,11 @@ export default function AdminDashboard() {
   const closePreferenceMutation = useMutation({
     mutationFn: async (payload: { year: number; is_closed: boolean }) =>
       api.put("/admin/preferences/close", payload),
-    onSuccess: (response) => {
-      qc.invalidateQueries({ queryKey: ["dashboard", YEAR] });
+    onSuccess: async (response) => {
       const data = response.data;
+      // 쿼리 무효화 및 즉시 재조회
+      await qc.invalidateQueries({ queryKey: ["dashboard", YEAR] });
+      await qc.refetchQueries({ queryKey: ["dashboard", YEAR] });
       alert(data.is_closed ? "희망 제출이 마감되었습니다." : "희망 제출 마감이 해제되었습니다.");
     },
     onError: (err: any) => {
@@ -478,7 +480,7 @@ export default function AdminDashboard() {
                     closePreferenceMutation.mutate({ year: YEAR, is_closed: !isCurrentlyClosed });
                   }
                 }}
-                disabled={closePreferenceMutation.status === "pending"}
+                disabled={closePreferenceMutation.isPending}
                 style={{
                   width: "100%",
                   padding: "0.75rem",
@@ -486,13 +488,13 @@ export default function AdminDashboard() {
                   color: "white",
                   border: "none",
                   borderRadius: "4px",
-                  cursor: closePreferenceMutation.status === "pending" ? "not-allowed" : "pointer",
+                  cursor: closePreferenceMutation.isPending ? "not-allowed" : "pointer",
                   fontSize: "0.9rem",
                   fontWeight: "600",
-                  opacity: closePreferenceMutation.status === "pending" ? 0.6 : 1,
+                  opacity: closePreferenceMutation.isPending ? 0.6 : 1,
                 }}
               >
-                {closePreferenceMutation.status === "pending"
+                {closePreferenceMutation.isPending
                   ? "처리 중..."
                   : dashboardData?.is_closed
                   ? "마감 해제"
