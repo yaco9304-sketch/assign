@@ -20,7 +20,7 @@ class TeacherUpdate(BaseModel):
 
 class PreferenceCreate(BaseModel):
   year: int
-  first_choice_grade: int
+  first_choice_grade: int | None = None  # 교과전담 선택 시 null
   second_choice_grade: int | None = None
   third_choice_grade: int | None = None
   wants_grade_head: bool = False  # 학년부장 희망
@@ -31,7 +31,7 @@ class PreferenceCreate(BaseModel):
 
 class PreferenceOut(BaseModel):
   year: int
-  first_choice_grade: int
+  first_choice_grade: int | None  # 교과전담 선택 시 null
   second_choice_grade: int | None
   third_choice_grade: int | None
   wants_grade_head: bool
