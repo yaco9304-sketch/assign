@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.config import settings
 from app.core.security import create_access_token, get_current_user
+from app.core.security_enhanced import check_rate_limit, sanitize_string
 from app.db import get_session
 from app import models
 from app.schemas import LoginRequest, TeacherUpdate
@@ -17,28 +18,45 @@ class GoogleTokenRequest(BaseModel):
 
 
 @router.post("/login")
-async def login(req: LoginRequest, session: AsyncSession = Depends(get_session)):
-  name = req.name
+async def login(req: LoginRequest, request: Request, session: AsyncSession = Depends(get_session)):
+  # Rate limiting 체크
+  client_ip = request.client.host if request.client else "unknown"
+  if not check_rate_limit(f"login:{client_ip}", max_requests=5, window_seconds=300):
+    raise HTTPException(
+      status_code=429,
+      detail="Too many login attempts. Please try again later."
+    )
+  
+  # 입력 sanitization
+  name = sanitize_string(req.name) if req.name else None
   password = req.password
+  
+  # 비밀번호 길이 검증
+  if len(password) > 200:
+    raise HTTPException(status_code=400, detail="Invalid input")
+  
   role = req.role
   if role == "admin":
     if password != settings.admin_password:
-      raise HTTPException(status_code=401, detail="invalid password")
+      raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token({"role": "admin"})
     return {"token": token, "role": "admin"}
 
   # teacher login (shared password) + ensure teacher exists
   if password != settings.teacher_password:
-    raise HTTPException(status_code=401, detail="invalid password")
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
-  stmt = select(models.Teacher).where(models.Teacher.name == name)
-  res = await session.execute(stmt)
-  teacher = res.scalars().first()
-  if not teacher:
-    teacher = models.Teacher(name=name)
-    session.add(teacher)
-    await session.commit()
-    await session.refresh(teacher)
+  if name:
+    stmt = select(models.Teacher).where(models.Teacher.name == name)
+    res = await session.execute(stmt)
+    teacher = res.scalars().first()
+    if not teacher:
+      teacher = models.Teacher(name=name)
+      session.add(teacher)
+      await session.commit()
+      await session.refresh(teacher)
+  else:
+    raise HTTPException(status_code=400, detail="Name is required for teacher login")
 
   token = create_access_token({"role": "teacher", "teacher_id": teacher.id})
   return {"token": token, "role": "teacher", "teacher_id": teacher.id}
@@ -130,13 +148,13 @@ async def google_login(req: GoogleTokenRequest, session: AsyncSession = Depends(
 @router.get("/me")
 async def get_me(session: AsyncSession = Depends(get_session), user=Depends(get_current_user)):
   if user.get("role") != "teacher":
-    raise HTTPException(status_code=403, detail="teacher only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   teacher_id = user.get("teacher_id")
   stmt = select(models.Teacher).where(models.Teacher.id == teacher_id)
   res = await session.execute(stmt)
   teacher = res.scalars().first()
   if not teacher:
-    raise HTTPException(status_code=404, detail="teacher not found")
+    raise HTTPException(status_code=404, detail="Not found")
   return {
     "id": teacher.id,
     "name": teacher.name,
@@ -159,14 +177,15 @@ async def update_me(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "teacher":
-    raise HTTPException(status_code=403, detail="teacher only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   teacher_id = user.get("teacher_id")
   stmt = select(models.Teacher).where(models.Teacher.id == teacher_id)
   res = await session.execute(stmt)
   teacher = res.scalars().first()
   if not teacher:
-    raise HTTPException(status_code=404, detail="teacher not found")
+    raise HTTPException(status_code=404, detail="Not found")
   
+  # 입력 검증 및 sanitization은 Pydantic 스키마에서 처리됨
   if payload.current_grade is not None:
     teacher.current_grade = payload.current_grade
   if payload.current_class is not None:
@@ -182,6 +201,7 @@ async def update_me(
   if payload.duty_role is not None:
     teacher.duty_role = payload.duty_role
   if payload.grade_history is not None:
+    # grade_history는 이미 Pydantic에서 검증됨
     teacher.grade_history = payload.grade_history
   
   await session.commit()

@@ -16,7 +16,7 @@ async def get_my_preference(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "teacher":
-    raise HTTPException(status_code=403, detail="teacher only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   teacher_id = user.get("teacher_id")
   stmt = select(models.Preference).where(
     models.Preference.year == year, models.Preference.teacher_id == teacher_id
@@ -33,7 +33,7 @@ async def upsert_my_preference(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "teacher":
-    raise HTTPException(status_code=403, detail="teacher only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   
   # 마감 상태 확인
   from sqlalchemy import select

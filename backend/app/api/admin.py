@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.db import get_session
@@ -6,6 +6,7 @@ from app import models
 from app.schemas import GradeSettingIn, AssignmentOut, AdminSettingIn, AdminSettingOut, ClosePreferenceRequest
 from app.assignment.engine import run_assignment
 from app.core.security import get_current_user
+from app.core.security_enhanced import validate_file_size, validate_file_extension, check_rate_limit
 from fastapi.responses import StreamingResponse
 import io
 from openpyxl import load_workbook
@@ -21,7 +22,7 @@ async def dashboard(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   
   # 전체 교사 수 (설정에서 가져오기, 없으면 DB의 실제 교사 수)
   admin_setting_stmt = select(models.AdminSetting).where(models.AdminSetting.year == year)
@@ -84,7 +85,7 @@ async def summary(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   prefs = (
     await session.execute(select(models.Preference).where(models.Preference.year == year))
   ).scalars()
@@ -113,7 +114,7 @@ async def get_settings(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   stmt = select(models.GradeSetting).where(models.GradeSetting.year == year)
   res = await session.execute(stmt)
   return res.scalars().all()
@@ -126,7 +127,7 @@ async def upsert_settings(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   for item in payload:
     stmt = select(models.GradeSetting).where(
       models.GradeSetting.year == item.year,
@@ -177,7 +178,7 @@ async def close_preferences(
 ):
   """희망 제출 마감 설정/해제 (관리자만)"""
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   
   stmt = select(models.AdminSetting).where(models.AdminSetting.year == payload.year)
   res = await session.execute(stmt)
@@ -204,7 +205,7 @@ async def update_total_teachers(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   
   stmt = select(models.AdminSetting).where(models.AdminSetting.year == payload.year)
   res = await session.execute(stmt)
@@ -228,10 +229,19 @@ async def upload_teachers(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   
-  if not file.filename.endswith((".xlsx", ".xls")):
-    raise HTTPException(status_code=400, detail="엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.")
+  # 파일 확장자 검증
+  if not validate_file_extension(file.filename):
+    raise HTTPException(status_code=400, detail="Only Excel files (.xlsx, .xls) are allowed")
+  
+  # 파일 크기 검증 (10MB 제한)
+  file_content = await file.read()
+  if not validate_file_size(len(file_content), max_size_mb=10):
+    raise HTTPException(status_code=400, detail="File size exceeds 10MB limit")
+  
+  # 파일 내용 재사용을 위해 seek
+  await file.seek(0)
   
   try:
     # 파일 읽기
@@ -278,7 +288,7 @@ async def upload_teachers(
         header_map["grade_history"] = idx
     
     if "name" not in header_map:
-      raise HTTPException(status_code=400, detail="엑셀 파일에 '이름' 열이 없습니다.")
+      raise HTTPException(status_code=400, detail="Excel file must contain 'name' column")
     
     # 데이터 행 처리
     success_count = 0
@@ -400,9 +410,12 @@ async def upload_teachers(
       "error_count": error_count,
       "errors": errors[:10],  # 최대 10개 오류만 반환
     }
-    
   except Exception as e:
-    raise HTTPException(status_code=400, detail=f"엑셀 파일 처리 중 오류: {str(e)}")
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.error(f"Excel file processing error: {e}", exc_info=True)
+    # 상세한 에러 메시지 노출 방지
+    raise HTTPException(status_code=400, detail="Excel file processing failed")
 
 
 @router.post("/assign", response_model=list[AssignmentOut])
@@ -412,7 +425,7 @@ async def assign(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   try:
     # 기존 결과 삭제
     await session.execute(
@@ -437,7 +450,7 @@ async def list_assignments(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   stmt = (
     select(
       models.Assignment.id,
@@ -475,7 +488,7 @@ async def export_assignments(
   user=Depends(get_current_user),
 ):
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   stmt = (
     select(
       models.Assignment.teacher_id,
@@ -515,7 +528,7 @@ async def list_preferences(
 ):
   """제출한 사람들의 명단과 지망 정보 조회"""
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   
   import logging
   logger = logging.getLogger(__name__)
@@ -573,7 +586,7 @@ async def clear_preferences(
 ):
   """특정 연도의 모든 희망 초기화"""
   if user.get("role") != "admin":
-    raise HTTPException(status_code=403, detail="admin only")
+    raise HTTPException(status_code=403, detail="Forbidden")
   
   # 해당 연도의 모든 희망 삭제
   deleted = await session.execute(

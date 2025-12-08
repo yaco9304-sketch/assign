@@ -24,7 +24,28 @@ def decode_token(token: str):
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)):
-  payload = decode_token(credentials.credentials)
-  return payload  # contains role, teacher_id (for teacher role)
+  try:
+    payload = decode_token(credentials.credentials)
+    
+    # 토큰 페이로드 검증
+    if not isinstance(payload, dict):
+      raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    
+    # role 검증
+    role = payload.get("role")
+    if role not in ["admin", "teacher"]:
+      raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    
+    # teacher_id 검증 (teacher 역할인 경우)
+    if role == "teacher":
+      teacher_id = payload.get("teacher_id")
+      if not teacher_id or not isinstance(teacher_id, int):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    
+    return payload  # contains role, teacher_id (for teacher role)
+  except HTTPException:
+    raise
+  except Exception as e:
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 
