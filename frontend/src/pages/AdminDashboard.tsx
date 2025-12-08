@@ -89,13 +89,20 @@ export default function AdminDashboard() {
   });
 
   // 제출 명단 조회
-  const { data: preferencesData, refetch: refetchPreferences, isLoading: isLoadingPreferences } = useQuery({
+  const { data: preferencesData, refetch: refetchPreferences, isLoading: isLoadingPreferences, error: preferencesError } = useQuery({
     queryKey: ["preferences", YEAR],
     queryFn: async () => {
-      const res = await api.get("/admin/preferences", { params: { year: YEAR } });
-      return res.data;
+      try {
+        const res = await api.get("/admin/preferences", { params: { year: YEAR } });
+        console.log("제출 명단 API 응답:", res.data);
+        return res.data;
+      } catch (err: any) {
+        console.error("제출 명단 API 오류:", err);
+        throw err;
+      }
     },
     refetchInterval: 30000, // 30초마다 자동 새로고침
+    retry: 1,
   });
 
   // 희망 초기화
@@ -661,6 +668,11 @@ export default function AdminDashboard() {
                 {isLoadingPreferences ? "새로고침 중..." : "새로고침"}
               </button>
             </div>
+            {preferencesError && (
+              <div style={{ padding: "1rem", marginBottom: "1rem", backgroundColor: "#ffebee", color: "#c62828", borderRadius: "4px", fontSize: "0.9rem" }}>
+                오류: {preferencesError.response?.data?.detail || preferencesError.message || "제출 명단을 불러올 수 없습니다."}
+              </div>
+            )}
             {isLoadingPreferences ? (
               <div style={{ padding: "2rem", textAlign: "center", color: "#999" }}>로딩 중...</div>
             ) : preferencesData && preferencesData.length > 0 ? (
