@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# 데이터베이스
+*.db
+*.sqlite
+*.sqlite3
+
+# 환경 변수
+.env
+.env.local
+.env.production
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 로그
+*.log
+logs/
+
+# 운영체제
+.DS_Store
+Thumbs.db
+
+# 빌드 결과물
+dist/
+build/
+*.egg-info/
+
+# 프론트엔드
+node_modules/
+.npm
+.pnpm-store
+
+# 백업
+*.backup
+*.bak
+backups/
+
+# 임시 파일
+*.tmp
+*.temp
+
