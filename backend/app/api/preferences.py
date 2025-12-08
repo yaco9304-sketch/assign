@@ -35,12 +35,18 @@ async def upsert_my_preference(
   if user.get("role") != "teacher":
     raise HTTPException(status_code=403, detail="teacher only")
   teacher_id = user.get("teacher_id")
+  
+  import logging
+  logger = logging.getLogger(__name__)
+  logger.info(f"희망 제출/수정 요청: teacher_id={teacher_id}, year={payload.year}, first={payload.first_choice_grade}, second={payload.second_choice_grade}, third={payload.third_choice_grade}")
+  
   stmt = select(models.Preference).where(
     models.Preference.year == payload.year, models.Preference.teacher_id == teacher_id
   )
   res = await session.execute(stmt)
   pref = res.scalars().first()
   if pref:
+    logger.info(f"기존 Preference 업데이트: id={pref.id}")
     pref.first_choice_grade = payload.first_choice_grade
     pref.second_choice_grade = payload.second_choice_grade
     pref.third_choice_grade = payload.third_choice_grade
@@ -49,6 +55,7 @@ async def upsert_my_preference(
     pref.wants_duty_head = payload.wants_duty_head
     pref.comment = payload.comment
   else:
+    logger.info(f"새 Preference 생성: teacher_id={teacher_id}, year={payload.year}")
     pref = models.Preference(
       teacher_id=teacher_id,
       year=payload.year,
@@ -63,5 +70,6 @@ async def upsert_my_preference(
     session.add(pref)
   await session.commit()
   await session.refresh(pref)
+  logger.info(f"희망 제출/수정 완료: id={pref.id}")
   return pref
 

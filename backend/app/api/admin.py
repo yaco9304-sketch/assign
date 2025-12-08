@@ -471,6 +471,16 @@ async def list_preferences(
   if user.get("role") != "admin":
     raise HTTPException(status_code=403, detail="admin only")
   
+  import logging
+  logger = logging.getLogger(__name__)
+  logger.info(f"제출 명단 조회 요청: year={year}")
+  
+  # 전체 Preference 확인
+  all_prefs_stmt = select(models.Preference).where(models.Preference.year == year)
+  all_prefs_res = await session.execute(all_prefs_stmt)
+  all_prefs = all_prefs_res.scalars().all()
+  logger.info(f"해당 연도의 전체 Preference 수: {len(all_prefs)}")
+  
   stmt = (
     select(
       models.Preference.id,
@@ -490,7 +500,7 @@ async def list_preferences(
   res = await session.execute(stmt)
   rows = res.all()
   
-  return [
+  result = [
     {
       "id": r.id,
       "teacher_id": r.teacher_id,
@@ -504,6 +514,9 @@ async def list_preferences(
     }
     for r in rows
   ]
+  
+  logger.info(f"제출 명단 조회 결과: {len(result)}건")
+  return result
 
 
 @router.delete("/preferences")
