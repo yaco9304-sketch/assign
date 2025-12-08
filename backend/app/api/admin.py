@@ -228,6 +228,8 @@ async def upload_teachers(
         header_map["subject"] = idx
       elif "특수" in header_str or "special" in header_str:
         header_map["special_conditions"] = idx
+      elif "본교 담임 이력" in header_str or "학년이력" in header_str or "grade_history" in header_str or "담임 이력" in header_str:
+        header_map["grade_history"] = idx
     
     if "name" not in header_map:
       raise HTTPException(status_code=400, detail="엑셀 파일에 '이름' 열이 없습니다.")
@@ -315,6 +317,28 @@ async def upload_teachers(
         
         if "special_conditions" in header_map and row[header_map["special_conditions"]].value:
           teacher.special_conditions = str(row[header_map["special_conditions"]].value).strip() or None
+        
+        # 학년 이력 파싱 및 저장
+        if "grade_history" in header_map and row[header_map["grade_history"]].value:
+          import json
+          history_str = str(row[header_map["grade_history"]].value).strip()
+          if history_str:
+            try:
+              # "연도:학년,연도:학년" 형식 파싱
+              history = []
+              for entry in history_str.split(","):
+                entry = entry.strip()
+                if ":" in entry:
+                  parts = entry.split(":")
+                  if len(parts) == 2:
+                    year = int(parts[0].strip())
+                    grade = int(parts[1].strip())
+                    history.append({"year": year, "grade": grade})
+              if history:
+                teacher.grade_history = json.dumps(history, ensure_ascii=False)
+            except (ValueError, TypeError) as e:
+              # 파싱 실패 시 무시 (에러 로그에 기록하지 않음)
+              pass
         
         success_count += 1
         

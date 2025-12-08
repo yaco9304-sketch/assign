@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Boolean, ForeignKey
+from sqlalchemy import Integer, String, Boolean, ForeignKey, JSON, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
@@ -19,6 +19,7 @@ class Teacher(Base):
   duty_role: Mapped[str | None] = mapped_column(String, nullable=True)  # 업무부장/학년부장/교과전담 등
   subject: Mapped[str | None] = mapped_column(String, nullable=True)
   special_conditions: Mapped[str | None] = mapped_column(String, nullable=True)
+  grade_history: Mapped[str | None] = mapped_column(Text, nullable=True)  # 본교 근무 기간 동안 담임한 학년 이력 (JSON 형식: [{"year": 2023, "grade": 1}, ...])
 
   preferences: Mapped[list["Preference"]] = relationship(back_populates="teacher")
   assignments: Mapped[list["Assignment"]] = relationship(back_populates="teacher")

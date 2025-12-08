@@ -15,6 +15,7 @@ class TeacherUpdate(BaseModel):
   is_homeroom_current: bool | None = None
   is_subject_teacher: bool | None = None
   duty_role: str | None = None  # 업무부장 여부
+  grade_history: str | None = None  # 본교 근무 기간 동안 담임한 학년 이력 (JSON 형식: [{"year": 2023, "grade": 1}, ...])
 
 
 class PreferenceCreate(BaseModel):

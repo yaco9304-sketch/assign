@@ -148,6 +148,7 @@ async def get_me(session: AsyncSession = Depends(get_session), user=Depends(get_
     "is_homeroom_current": teacher.is_homeroom_current,
     "is_subject_teacher": teacher.is_subject_teacher,
     "duty_role": teacher.duty_role,
+    "grade_history": teacher.grade_history,
   }
 
 
@@ -180,6 +181,8 @@ async def update_me(
     teacher.is_subject_teacher = payload.is_subject_teacher
   if payload.duty_role is not None:
     teacher.duty_role = payload.duty_role
+  if payload.grade_history is not None:
+    teacher.grade_history = payload.grade_history
   
   await session.commit()
   await session.refresh(teacher)
@@ -195,5 +198,6 @@ async def update_me(
     "is_homeroom_current": teacher.is_homeroom_current,
     "is_subject_teacher": teacher.is_subject_teacher,
     "duty_role": teacher.duty_role,
+    "grade_history": teacher.grade_history,
   }
 

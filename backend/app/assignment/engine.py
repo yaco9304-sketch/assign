@@ -160,7 +160,8 @@ async def run_assignment(session: AsyncSession, year: int):
       assigned.append((t, g, "조정", desc))
       slots.remove(g)
 
-  # DB 저장
+  # DB 저장 및 grade_history 업데이트
+  import json
   for t, g, atype, desc in assigned:
     # rule_reference 설정
     rule_ref = None
@@ -195,6 +196,29 @@ async def run_assignment(session: AsyncSession, year: int):
         message=log_msg,
       )
     )
+    
+    # grade_history 업데이트 (배정 완료 후 이력 추가)
+    teacher_stmt = select(Teacher).where(Teacher.id == t.id)
+    teacher_res = await session.execute(teacher_stmt)
+    teacher_obj = teacher_res.scalars().first()
+    if teacher_obj:
+      history = []
+      if teacher_obj.grade_history:
+        try:
+          history = json.loads(teacher_obj.grade_history) if isinstance(teacher_obj.grade_history, str) else teacher_obj.grade_history
+        except (json.JSONDecodeError, TypeError):
+          history = []
+      # 중복 체크: 같은 연도에 이미 배정 기록이 있으면 업데이트, 없으면 추가
+      found = False
+      for entry in history:
+        if isinstance(entry, dict) and entry.get("year") == year:
+          entry["grade"] = g
+          found = True
+          break
+      if not found:
+        history.append({"year": year, "grade": g})
+      teacher_obj.grade_history = json.dumps(history, ensure_ascii=False)
+  
   await session.commit()
   return assigned, excluded, logs_all
 

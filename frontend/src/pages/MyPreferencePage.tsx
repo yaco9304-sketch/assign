@@ -33,6 +33,9 @@ export default function MyPreferencePage() {
   const [wantsDutyHeadInStep1, setWantsDutyHeadInStep1] = useState(false);
   const [dutyHeadDetail, setDutyHeadDetail] = useState<string>("");
   const [wantsGradeHeadInStep1, setWantsGradeHeadInStep1] = useState(false);
+  const [gradeHistory, setGradeHistory] = useState<Array<{ year: number; grade: number }>>([]);
+  const [newHistoryYear, setNewHistoryYear] = useState<number | "">("");
+  const [newHistoryGrade, setNewHistoryGrade] = useState<number | "">("");
 
   // teacherData가 로드되면 폼에 값 설정
   useEffect(() => {
@@ -47,6 +50,19 @@ export default function MyPreferencePage() {
       setWantsDutyHeadInStep1(isDutyHead || false);
       setDutyHeadDetail(isDutyHead && teacherData.duty_role.includes(":") ? teacherData.duty_role.split(":")[1].trim() : "");
       setWantsGradeHeadInStep1(teacherData.duty_role === "학년부장" || false);
+      // grade_history 파싱
+      if (teacherData.grade_history) {
+        try {
+          const parsed = typeof teacherData.grade_history === "string" 
+            ? JSON.parse(teacherData.grade_history) 
+            : teacherData.grade_history;
+          if (Array.isArray(parsed)) {
+            setGradeHistory(parsed);
+          }
+        } catch (e) {
+          console.error("Failed to parse grade_history:", e);
+        }
+      }
     }
   }, [teacherData]);
 
@@ -119,6 +135,7 @@ export default function MyPreferencePage() {
       payload.school_join_year = schoolJoinYear === "" ? null : Number(schoolJoinYear);
       payload.hire_year = hireYear === "" ? null : Number(hireYear);
       payload.duty_role = dutyRole;
+      payload.grade_history = gradeHistory.length > 0 ? JSON.stringify(gradeHistory) : null;
 
       console.log("Sending teacher update:", payload);
       return api.put("/auth/me", payload);
@@ -545,6 +562,132 @@ export default function MyPreferencePage() {
                       fontSize: "1rem",
                     }}
                   />
+                </div>
+
+                {/* 본교 근무 기간 동안 담임한 학년 이력 */}
+                <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: "1px solid #eee" }}>
+                  <label style={{ display: "block", color: "#333", fontSize: "0.95rem", fontWeight: "600", marginBottom: "0.75rem" }}>
+                    본교 근무 기간 동안 담임한 학년 이력
+                  </label>
+                  <p style={{ fontSize: "0.85rem", color: "#666", marginBottom: "1rem" }}>
+                    동일 학년을 2번까지만 담임할 수 있습니다. 본교에서 담임했던 학년을 입력해주세요.
+                  </p>
+                  
+                  {/* 이력 추가 폼 */}
+                  <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+                    <input
+                      type="number"
+                      min="2000"
+                      max={new Date().getFullYear()}
+                      value={newHistoryYear}
+                      onChange={(e) => setNewHistoryYear(e.target.value === "" ? "" : Number(e.target.value))}
+                      placeholder="연도 (예: 2023)"
+                      style={{
+                        flex: "1",
+                        minWidth: "120px",
+                        padding: "0.5rem",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        fontSize: "0.9rem",
+                      }}
+                    />
+                    <select
+                      value={newHistoryGrade}
+                      onChange={(e) => setNewHistoryGrade(e.target.value === "" ? "" : Number(e.target.value))}
+                      style={{
+                        flex: "1",
+                        minWidth: "100px",
+                        padding: "0.5rem",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      <option value="">학년 선택</option>
+                      {[1, 2, 3, 4, 5, 6].map((g) => (
+                        <option key={g} value={g}>
+                          {g}학년
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newHistoryYear !== "" && newHistoryGrade !== "") {
+                          // 중복 체크
+                          const exists = gradeHistory.some(
+                            (h) => h.year === Number(newHistoryYear) && h.grade === Number(newHistoryGrade)
+                          );
+                          if (!exists) {
+                            setGradeHistory([...gradeHistory, { year: Number(newHistoryYear), grade: Number(newHistoryGrade) }]);
+                            setNewHistoryYear("");
+                            setNewHistoryGrade("");
+                          } else {
+                            alert("이미 등록된 이력입니다.");
+                          }
+                        }
+                      }}
+                      disabled={newHistoryYear === "" || newHistoryGrade === ""}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        backgroundColor: "#4caf50",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: newHistoryYear === "" || newHistoryGrade === "" ? "not-allowed" : "pointer",
+                        fontSize: "0.9rem",
+                        opacity: newHistoryYear === "" || newHistoryGrade === "" ? 0.5 : 1,
+                      }}
+                    >
+                      추가
+                    </button>
+                  </div>
+
+                  {/* 입력된 이력 목록 */}
+                  {gradeHistory.length > 0 && (
+                    <div style={{ marginTop: "1rem" }}>
+                      <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "0.5rem" }}>등록된 이력:</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                        {gradeHistory
+                          .sort((a, b) => b.year - a.year || b.grade - a.grade)
+                          .map((h, idx) => (
+                            <div
+                              key={idx}
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                padding: "0.5rem",
+                                backgroundColor: "#f5f5f5",
+                                borderRadius: "4px",
+                                fontSize: "0.9rem",
+                              }}
+                            >
+                              <span>
+                                {h.year}년 {h.grade}학년
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setGradeHistory(gradeHistory.filter((_, i) => i !== gradeHistory.indexOf(h)));
+                                }}
+                                style={{
+                                  padding: "0.25rem 0.5rem",
+                                  backgroundColor: "#f44336",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  cursor: "pointer",
+                                  fontSize: "0.85rem",
+                                }}
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <button

@@ -12,6 +12,10 @@ class Settings(BaseSettings):
   access_token_expire_minutes: int = 60 * 24
   google_client_id: str = Field("", env="GOOGLE_CLIENT_ID")
   google_client_secret: str = Field("", env="GOOGLE_CLIENT_SECRET")
+  allowed_origins: str = Field(
+    "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://127.0.0.1:5175",
+    env="ALLOWED_ORIGINS"
+  )
 
   class Config:
     env_file = ".env"

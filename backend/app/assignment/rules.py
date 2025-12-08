@@ -145,9 +145,12 @@ def apply_priority_rules(teachers: List[Teacher], settings: List[GradeSetting], 
 
 
 def apply_rotation(teachers: List[Teacher], prefs_by_teacher: Dict[int, Preference]):
+  import json
   updated: List[Teacher] = []
   for t in teachers:
     banned = set()
+    
+    # 1. 올해 담당 학년 제외 (제12조①)
     if t.current_grade:
       prefs = prefs_by_teacher.get(t.id)
       wants_same = False
@@ -160,6 +163,26 @@ def apply_rotation(teachers: List[Teacher], prefs_by_teacher: Dict[int, Preferen
       # 1학년/6학년은 동일학년 희망 시 제한 완화
       if not (t.current_grade in {1, 6} and wants_same):
         banned.add(t.current_grade)
+    
+    # 2. 동일 학년 2번 제한 (본교 근무 기간 동안)
+    if t.grade_history:
+      try:
+        history = json.loads(t.grade_history) if isinstance(t.grade_history, str) else t.grade_history
+        # 각 학년별로 몇 번 담임했는지 카운트
+        grade_counts: Dict[int, int] = {}
+        for entry in history:
+          if isinstance(entry, dict) and "grade" in entry:
+            grade = entry["grade"]
+            grade_counts[grade] = grade_counts.get(grade, 0) + 1
+        
+        # 2번 이상 담임한 학년은 제외
+        for grade, count in grade_counts.items():
+          if count >= 2:
+            banned.add(grade)
+      except (json.JSONDecodeError, TypeError, KeyError):
+        # JSON 파싱 실패 시 무시
+        pass
+    
     t.banned_grades = banned  # type: ignore[attr-defined]
     updated.append(t)
   return updated
