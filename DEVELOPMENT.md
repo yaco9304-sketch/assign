@@ -336,3 +336,4 @@ def score_candidate(teacher: Teacher, grade: int, prefs: list[int]) -> tuple[int
 
 내부 사용 전용
 
+

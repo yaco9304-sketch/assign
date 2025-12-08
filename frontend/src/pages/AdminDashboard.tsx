@@ -448,12 +448,77 @@ export default function AdminDashboard() {
                   border: "none",
                   borderRadius: "4px",
                   cursor: clearPreferencesMutation.status === "pending" ? "not-allowed" : "pointer",
+                  fontSize: "0.9rem",
+                  fontWeight: "600",
+                  marginBottom: "0.5rem",
+                  opacity: clearPreferencesMutation.status === "pending" ? 0.6 : 1,
+                }}
+              >
+                희망서 초기화
+              </button>
+              <button
+                onClick={() => {
+                  const isCurrentlyClosed = dashboardData?.is_closed || false;
+                  const action = isCurrentlyClosed ? "해제" : "마감";
+                  if (confirm(`희망 제출을 ${action}하시겠습니까?`)) {
+                    closePreferenceMutation.mutate({ year: YEAR, is_closed: !isCurrentlyClosed });
+                  }
+                }}
+                disabled={closePreferenceMutation.status === "pending"}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  backgroundColor: dashboardData?.is_closed ? "#4caf50" : "#ff9800",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: closePreferenceMutation.status === "pending" ? "not-allowed" : "pointer",
+                  fontSize: "0.9rem",
+                  fontWeight: "600",
+                  opacity: closePreferenceMutation.status === "pending" ? 0.6 : 1,
+                }}
+              >
+                {dashboardData?.is_closed ? "마감 해제" : "희망 제출 마감"}
+              </button>
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: clearPreferencesMutation.status === "pending" ? "not-allowed" : "pointer",
                   fontSize: "1rem",
                   fontWeight: "600",
                   opacity: clearPreferencesMutation.status === "pending" ? 0.6 : 1,
                 }}
               >
                 {clearPreferencesMutation.status === "pending" ? "초기화 중..." : "희망서 초기화"}
+              </button>
+              <button
+                onClick={() => {
+                  const isCurrentlyClosed = dashboardData?.is_closed || false;
+                  const action = isCurrentlyClosed ? "해제" : "마감";
+                  if (confirm(`희망 제출을 ${action}하시겠습니까?`)) {
+                    closePreferenceMutation.mutate({ year: YEAR, is_closed: !isCurrentlyClosed });
+                  }
+                }}
+                disabled={closePreferenceMutation.status === "pending"}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  backgroundColor: dashboardData?.is_closed ? "#4caf50" : "#ff9800",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: closePreferenceMutation.status === "pending" ? "not-allowed" : "pointer",
+                  fontSize: "0.9rem",
+                  fontWeight: "600",
+                  marginTop: "0.5rem",
+                  opacity: closePreferenceMutation.status === "pending" ? 0.6 : 1,
+                }}
+              >
+                {closePreferenceMutation.status === "pending"
+                  ? "처리 중..."
+                  : dashboardData?.is_closed
+                  ? "마감 해제"
+                  : "희망 제출 마감"}
               </button>
             </div>
 

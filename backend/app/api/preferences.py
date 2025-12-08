@@ -34,6 +34,15 @@ async def upsert_my_preference(
 ):
   if user.get("role") != "teacher":
     raise HTTPException(status_code=403, detail="teacher only")
+  
+  # 마감 상태 확인
+  from sqlalchemy import select
+  admin_setting_stmt = select(models.AdminSetting).where(models.AdminSetting.year == payload.year)
+  admin_setting_res = await session.execute(admin_setting_stmt)
+  admin_setting = admin_setting_res.scalars().first()
+  if admin_setting and admin_setting.is_closed:
+    raise HTTPException(status_code=403, detail="희망 제출이 마감되었습니다.")
+  
   teacher_id = user.get("teacher_id")
   
   import logging

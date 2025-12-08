@@ -24,6 +24,18 @@ export default function MyPreferencePage() {
     },
   });
 
+  // 마감 상태 확인
+  const { data: preferenceStatus } = useQuery({
+    queryKey: ["preferenceStatus", YEAR],
+    queryFn: async () => {
+      const res = await api.get("/admin/preferences/status", { params: { year: YEAR } });
+      return res.data;
+    },
+    refetchInterval: 30000, // 30초마다 자동 새로고침
+  });
+
+  const isClosed = preferenceStatus?.is_closed || false;
+
   const [currentGrade, setCurrentGrade] = useState<number | "">("");
   const [currentClass, setCurrentClass] = useState<string>("");
   const [schoolJoinYear, setSchoolJoinYear] = useState<number | "">("");
@@ -1021,6 +1033,8 @@ export default function MyPreferencePage() {
               </div>
             </form>
           </div>
+          )}
+        </>
         )}
 
         {/* Step 3: 제출 완료 */}

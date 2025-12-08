@@ -27,3 +27,4 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
   payload = decode_token(credentials.credentials)
   return payload  # contains role, teacher_id (for teacher role)
 
+

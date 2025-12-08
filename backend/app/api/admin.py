@@ -49,6 +49,9 @@ async def dashboard(
   # 학년별 학급 수
   grade_class_counts = {s.grade: s.class_count for s in settings}
   
+  # 마감 여부
+  is_closed = admin_setting.is_closed if admin_setting else False
+  
   # 지망 현황
   first_counts = {}
   second_counts = {}
@@ -151,6 +154,48 @@ async def upsert_settings(
   return {"status": "ok"}
 
 
+@router.get("/preferences/status")
+async def get_preference_status(
+  year: int,
+  session: AsyncSession = Depends(get_session),
+  user=Depends(get_current_user),
+):
+  """희망 제출 마감 상태 조회 (교사/관리자 모두 사용 가능)"""
+  stmt = select(models.AdminSetting).where(models.AdminSetting.year == year)
+  res = await session.execute(stmt)
+  admin_setting = res.scalars().first()
+  is_closed = admin_setting.is_closed if admin_setting else False
+  return {"year": year, "is_closed": is_closed}
+
+
+@router.put("/preferences/close")
+async def close_preferences(
+  payload: ClosePreferenceRequest,
+  session: AsyncSession = Depends(get_session),
+  user=Depends(get_current_user),
+):
+  """희망 제출 마감 설정/해제 (관리자만)"""
+  if user.get("role") != "admin":
+    raise HTTPException(status_code=403, detail="admin only")
+  
+  stmt = select(models.AdminSetting).where(models.AdminSetting.year == payload.year)
+  res = await session.execute(stmt)
+  admin_setting = res.scalars().first()
+  
+  if admin_setting:
+    admin_setting.is_closed = payload.is_closed
+  else:
+    admin_setting = models.AdminSetting(
+      year=payload.year,
+      total_teachers=0,
+      is_closed=payload.is_closed,
+    )
+    session.add(admin_setting)
+  
+  await session.commit()
+  return {"year": payload.year, "is_closed": payload.is_closed}
+
+
 @router.put("/dashboard/total-teachers")
 async def update_total_teachers(
   payload: AdminSettingIn,
@@ -167,7 +212,7 @@ async def update_total_teachers(
   if admin_setting:
     admin_setting.total_teachers = payload.total_teachers
   else:
-    admin_setting = models.AdminSetting(year=payload.year, total_teachers=payload.total_teachers)
+    admin_setting = models.AdminSetting(year=payload.year, total_teachers=payload.total_teachers, is_closed=False)
     session.add(admin_setting)
   
   await session.commit()

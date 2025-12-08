@@ -72,7 +72,13 @@ class AdminSettingIn(BaseModel):
 class AdminSettingOut(BaseModel):
   year: int
   total_teachers: int
+  is_closed: bool
 
   class Config:
     from_attributes = True
+
+
+class ClosePreferenceRequest(BaseModel):
+  year: int
+  is_closed: bool
 

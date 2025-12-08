@@ -81,4 +81,5 @@ class AdminSetting(Base):
   id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
   year: Mapped[int] = mapped_column(Integer, unique=True, index=True)
   total_teachers: Mapped[int] = mapped_column(Integer, default=0)  # 전체 교사 수
+  is_closed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")  # 마감 여부
 

@@ -45,7 +45,7 @@ git add .
 # 커밋
 git commit -m "Initial commit"
 
-# GitHub 저장소 연결 (위에서 만든 저장소 URL 사용)
+# GitHub 저장소 연결 (위에서 만든 저장소 URL 사용)g
 git remote add origin https://github.com/당신의사용자명/assignment.git
 
 # 코드 업로드

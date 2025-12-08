@@ -21,3 +21,4 @@ EXPOSE 8001
 # 서버 실행
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
 
+
