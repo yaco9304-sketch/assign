@@ -73,6 +73,7 @@ async def dashboard(
     "first_choice_counts": first_counts,
     "second_choice_counts": second_counts,
     "third_choice_counts": third_counts,
+    "is_closed": is_closed,
   }
 
 
