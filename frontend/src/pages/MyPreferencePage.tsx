@@ -1083,8 +1083,7 @@ export default function MyPreferencePage() {
               </div>
             </form>
           </div>
-          )}
-        </>
+          </>
         )}
 
         {/* Step 3: 제출 완료 */}

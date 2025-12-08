@@ -118,6 +118,20 @@ export default function AdminDashboard() {
     },
   });
 
+  // 마감 설정/해제
+  const closePreferenceMutation = useMutation({
+    mutationFn: async (payload: { year: number; is_closed: boolean }) =>
+      api.put("/admin/preferences/close", payload),
+    onSuccess: (response) => {
+      qc.invalidateQueries({ queryKey: ["dashboard", YEAR] });
+      const data = response.data;
+      alert(data.is_closed ? "희망 제출이 마감되었습니다." : "희망 제출 마감이 해제되었습니다.");
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.detail || "마감 설정 중 오류가 발생했습니다.");
+    },
+  });
+
   if (isLoading) {
     return (
       <div>
@@ -478,42 +492,6 @@ export default function AdminDashboard() {
                   opacity: closePreferenceMutation.status === "pending" ? 0.6 : 1,
                 }}
               >
-                {dashboardData?.is_closed ? "마감 해제" : "희망 제출 마감"}
-              </button>
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: clearPreferencesMutation.status === "pending" ? "not-allowed" : "pointer",
-                  fontSize: "1rem",
-                  fontWeight: "600",
-                  opacity: clearPreferencesMutation.status === "pending" ? 0.6 : 1,
-                }}
-              >
-                {clearPreferencesMutation.status === "pending" ? "초기화 중..." : "희망서 초기화"}
-              </button>
-              <button
-                onClick={() => {
-                  const isCurrentlyClosed = dashboardData?.is_closed || false;
-                  const action = isCurrentlyClosed ? "해제" : "마감";
-                  if (confirm(`희망 제출을 ${action}하시겠습니까?`)) {
-                    closePreferenceMutation.mutate({ year: YEAR, is_closed: !isCurrentlyClosed });
-                  }
-                }}
-                disabled={closePreferenceMutation.status === "pending"}
-                style={{
-                  width: "100%",
-                  padding: "0.75rem",
-                  backgroundColor: dashboardData?.is_closed ? "#4caf50" : "#ff9800",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: closePreferenceMutation.status === "pending" ? "not-allowed" : "pointer",
-                  fontSize: "0.9rem",
-                  fontWeight: "600",
-                  marginTop: "0.5rem",
-                  opacity: closePreferenceMutation.status === "pending" ? 0.6 : 1,
-                }}
-              >
                 {closePreferenceMutation.status === "pending"
                   ? "처리 중..."
                   : dashboardData?.is_closed
@@ -735,7 +713,7 @@ export default function AdminDashboard() {
             </div>
             {preferencesError && (
               <div style={{ padding: "1rem", marginBottom: "1rem", backgroundColor: "#ffebee", color: "#c62828", borderRadius: "4px", fontSize: "0.9rem" }}>
-                오류: {preferencesError.response?.data?.detail || preferencesError.message || "제출 명단을 불러올 수 없습니다."}
+                오류: {(preferencesError as any).response?.data?.detail || preferencesError.message || "제출 명단을 불러올 수 없습니다."}
               </div>
             )}
             {isLoadingPreferences ? (
