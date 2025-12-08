@@ -180,7 +180,14 @@ export default function MyPreferencePage() {
     },
     onError: (error: any) => {
       console.error("Teacher update error:", error);
-      const errorMessage = error.response?.data?.detail || error.message || "저장 중 오류가 발생했습니다.";
+      let errorMessage = "저장 중 오류가 발생했습니다.";
+      if (error.response?.data?.detail) {
+        errorMessage = typeof error.response.data.detail === "string" 
+          ? error.response.data.detail 
+          : JSON.stringify(error.response.data.detail);
+      } else if (error.message) {
+        errorMessage = typeof error.message === "string" ? error.message : String(error.message);
+      }
       alert(errorMessage);
     },
   });
@@ -267,7 +274,14 @@ export default function MyPreferencePage() {
     },
     onError: (error: any) => {
       console.error("Preference submission error:", error);
-      const errorMessage = error.response?.data?.detail || error.message || "제출 중 오류가 발생했습니다.";
+      let errorMessage = "제출 중 오류가 발생했습니다.";
+      if (error.response?.data?.detail) {
+        errorMessage = typeof error.response.data.detail === "string" 
+          ? error.response.data.detail 
+          : JSON.stringify(error.response.data.detail);
+      } else if (error.message) {
+        errorMessage = typeof error.message === "string" ? error.message : String(error.message);
+      }
       alert(errorMessage);
     },
   });
