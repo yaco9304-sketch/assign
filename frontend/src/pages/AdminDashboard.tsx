@@ -31,10 +31,10 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    if (dashboardData && dashboardData.total_teachers) {
-      setTotalTeachersInput(dashboardData.total_teachers);
+    if (dashboardDataWithDefaults && dashboardDataWithDefaults.total_teachers) {
+      setTotalTeachersInput(dashboardDataWithDefaults.total_teachers);
     }
-  }, [dashboardData]);
+  }, [dashboardDataWithDefaults]);
 
   const updateTotalTeachersMutation = useMutation({
     mutationFn: async (total: number) =>
@@ -207,7 +207,7 @@ export default function AdminDashboard() {
     );
   }
 
-  const dashboardData = data || {
+  const dashboardDataWithDefaults = dashboardData || {
     year: YEAR,
     total_teachers: 0,
     submitted_count: 0,
@@ -216,10 +216,11 @@ export default function AdminDashboard() {
     first_choice_counts: {},
     second_choice_counts: {},
     third_choice_counts: {},
+    is_closed: false,
   };
 
-  const submissionRate = dashboardData.total_teachers > 0 ? Math.round((dashboardData.submitted_count / dashboardData.total_teachers) * 100) : 0;
-  const notSubmitted = dashboardData.total_teachers - dashboardData.submitted_count;
+  const submissionRate = dashboardDataWithDefaults.total_teachers > 0 ? Math.round((dashboardDataWithDefaults.submitted_count / dashboardDataWithDefaults.total_teachers) * 100) : 0;
+  const notSubmitted = dashboardDataWithDefaults.total_teachers - dashboardDataWithDefaults.submitted_count;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#f5f5f5", display: "flex", flexDirection: "column" }}>
@@ -291,7 +292,7 @@ export default function AdminDashboard() {
                     <button
                       onClick={() => {
                         setIsEditingTotalTeachers(false);
-                        setTotalTeachersInput(dashboardData.total_teachers || 0);
+                        setTotalTeachersInput(dashboardDataWithDefaults.total_teachers || 0);
                       }}
                       style={{
                         padding: "0.5rem 1rem",
@@ -308,7 +309,7 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                    <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{dashboardData.total_teachers}명</div>
+                    <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{dashboardDataWithDefaults.total_teachers}명</div>
                     <button
                       onClick={() => setIsEditingTotalTeachers(true)}
                       style={{
@@ -339,7 +340,7 @@ export default function AdminDashboard() {
               <div>
                 <div style={{ color: "#666", fontSize: "0.9rem", marginBottom: "0.25rem" }}>희망 제출</div>
                 <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
-                  {dashboardData.submitted_count}/{dashboardData.total_teachers}
+                  {dashboardDataWithDefaults.submitted_count}/{dashboardDataWithDefaults.total_teachers}
                 </div>
               </div>
             </div>
@@ -354,7 +355,7 @@ export default function AdminDashboard() {
             >
               <div>
                 <div style={{ color: "#666", fontSize: "0.9rem", marginBottom: "0.25rem" }}>필요 담임 수</div>
-                <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{dashboardData.required_homerooms}명</div>
+                <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{dashboardDataWithDefaults.required_homerooms}명</div>
               </div>
             </div>
           </div>
@@ -414,7 +415,7 @@ export default function AdminDashboard() {
               >
                 <div style={{ fontSize: "1.2rem", fontWeight: "600", marginBottom: "0.5rem" }}>{grade}학년</div>
                 <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#1976d2" }}>
-                  {dashboardData.grade_class_counts?.[grade] || 0} 학급
+                  {dashboardDataWithDefaults.grade_class_counts?.[grade] || 0} 학급
                 </div>
               </div>
             ))}
@@ -482,7 +483,7 @@ export default function AdminDashboard() {
               </button>
               <button
                 onClick={() => {
-                  const isCurrentlyClosed = dashboardData?.is_closed || false;
+                  const isCurrentlyClosed = dashboardDataWithDefaults?.is_closed || false;
                   console.log("현재 마감 상태:", isCurrentlyClosed);
                   const action = isCurrentlyClosed ? "해제" : "마감";
                   if (confirm(`희망 제출을 ${action}하시겠습니까?`)) {
@@ -493,7 +494,7 @@ export default function AdminDashboard() {
                 style={{
                   width: "100%",
                   padding: "0.75rem",
-                  backgroundColor: dashboardData?.is_closed ? "#4caf50" : "#ff9800",
+                  backgroundColor: dashboardDataWithDefaults?.is_closed ? "#4caf50" : "#ff9800",
                   color: "white",
                   border: "none",
                   borderRadius: "4px",
@@ -505,13 +506,13 @@ export default function AdminDashboard() {
               >
                 {closePreferenceMutation.isPending
                   ? "처리 중..."
-                  : dashboardData?.is_closed
+                  : dashboardDataWithDefaults?.is_closed
                   ? "마감 해제"
                   : "희망 제출 마감"}
               </button>
-              {dashboardData && (
+              {dashboardDataWithDefaults && (
                 <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "#666" }}>
-                  현재 상태: {dashboardData.is_closed ? "마감됨" : "마감 안됨"}
+                  현재 상태: {dashboardDataWithDefaults.is_closed ? "마감됨" : "마감 안됨"}
                 </div>
               )}
             </div>
