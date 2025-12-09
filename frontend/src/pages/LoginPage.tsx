@@ -81,15 +81,19 @@ export default function LoginPage() {
         window.location.hostname === 'localhost';
       
       // redirect_uri 설정
-      // 환경 변수로 커스텀 redirect_uri 설정 가능
+      // ⚠️ 주의: 단축 URL은 redirect_uri로 사용할 수 없습니다
+      // Google OAuth는 실제로 콜백을 받을 수 있는 URL이어야 합니다
+      // 환경 변수로 커스텀 redirect_uri 설정 가능 (단축 URL 제외)
       const customRedirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
       
       let redirectUri: string;
       if (customRedirectUri) {
-        // 커스텀 redirect_uri 사용 (단축 URL 등)
+        // 커스텀 redirect_uri 사용
+        // 단축 URL이 아닌 실제 URL이어야 함 (예: https://your-domain.com/callback)
         redirectUri = customRedirectUri;
       } else if (isElectron) {
         // Electron 앱에서는 기본적으로 http://localhost 사용
+        // 이는 데스크톱 앱에서 가장 안정적인 방법
         redirectUri = 'http://localhost';
       } else {
         // 웹 앱에서는 현재 origin 사용
