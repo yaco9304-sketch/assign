@@ -2,6 +2,20 @@
 
 ## 📋 배포 전 준비사항
 
+### ⚠️ 중요: 리포지토리 공개 설정 (필수!)
+
+**GitHub Pages는 private 리포지토리에서 사용할 수 없습니다!**
+
+리포지토리를 public으로 변경해야 합니다:
+
+1. **리포지토리 Settings → General**
+2. 페이지 맨 아래로 스크롤
+3. "Danger Zone" 섹션 찾기
+4. "Change visibility" → "Make public" 클릭
+5. 확인 메시지 입력 후 변경
+
+**또는** GitHub Enterprise를 사용하면 private 리포지토리에서도 GitHub Pages를 사용할 수 있습니다 (유료).
+
 ### 1. 백엔드 서버 확인
 백엔드는 별도로 배포되어 있어야 합니다 (Render, Railway 등).
 백엔드 URL을 확인하세요: `https://your-backend-url.onrender.com`
@@ -9,6 +23,7 @@
 ### 2. GitHub 리포지토리 확인
 - 리포지토리 이름을 확인하세요 (예: `assign`)
 - GitHub Pages URL은 `https://username.github.io/repository-name` 형식입니다
+- **리포지토리가 public인지 확인하세요**
 
 ### 3. 환경 변수 준비
 GitHub Secrets에 저장할 환경 변수:
@@ -51,9 +66,20 @@ GitHub Secrets에 저장할 환경 변수:
    - "Deploy to GitHub Pages" 워크플로우 실행 확인
    - 빌드 완료 대기 (약 2-3분)
 
-#### 4단계: GitHub Pages 활성화 (⚠️ 필수!)
+#### 4단계: 리포지토리 공개 설정 (⚠️ 필수!)
 
-**중요:** 이 단계를 먼저 완료하지 않으면 워크플로우가 실패합니다!
+**중요:** GitHub Pages는 private 리포지토리에서 사용할 수 없습니다!
+
+1. **Settings → General** 접속
+2. 페이지 맨 아래로 스크롤
+3. **"Danger Zone"** 섹션 찾기
+4. **"Change visibility"** 클릭
+5. **"Make public"** 선택
+6. 확인 메시지 입력 후 변경
+
+#### 5단계: GitHub Pages 활성화
+
+**중요:** 리포지토리를 public으로 변경한 후에만 이 단계를 진행할 수 있습니다!
 
 1. **Settings → Pages** 접속
    - 리포지토리 Settings → 왼쪽 메뉴에서 "Pages" 클릭
@@ -206,6 +232,21 @@ GitHub Actions 워크플로우 파일이 자동 생성되었습니다.
 - 이후 배포는 변경된 파일만 빌드
 
 ## 🐛 문제 해결
+
+### 문제 0: "Upgrade or make this repository public" 메시지
+
+**증상:** GitHub Pages 설정 페이지에 "Source" 옵션이 보이지 않고, "Upgrade or make this repository public" 메시지가 표시됨
+
+**원인:** 리포지토리가 private 상태입니다.
+
+**해결:**
+1. Settings → General 접속
+2. 페이지 맨 아래 "Danger Zone" 섹션 찾기
+3. "Change visibility" → "Make public" 클릭
+4. 확인 메시지 입력 후 변경
+5. Settings → Pages로 돌아가서 "Source" 옵션이 나타나는지 확인
+
+**참고:** GitHub Enterprise를 사용하면 private 리포지토리에서도 GitHub Pages를 사용할 수 있습니다 (유료).
 
 ### 문제 1: 빌드 실패
 **증상:** GitHub Actions에서 빌드 실패
