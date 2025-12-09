@@ -8,9 +8,23 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminSummary from "./pages/AdminSummary";
 import AdminSettings from "./pages/AdminSettings";
 import AdminAssignments from "./pages/AdminAssignments";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import "./index.css";
 
 const qc = new QueryClient();
+
+// PWA Service Worker 등록
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('SW registered: ', registration);
+      })
+      .catch((registrationError) => {
+        console.log('SW registration failed: ', registrationError);
+      });
+  });
+}
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -25,6 +39,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/admin/assignments" element={<AdminAssignments />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
+        <PWAInstallPrompt />
       </BrowserRouter>
     </QueryClientProvider>
   </React.StrictMode>
