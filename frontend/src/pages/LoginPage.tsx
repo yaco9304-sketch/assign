@@ -80,9 +80,21 @@ export default function LoginPage() {
         window.location.hostname === '' ||
         window.location.hostname === 'localhost';
       
-      // redirect_uri 설정 (데스크톱 앱용)
-      // Electron 앱에서는 항상 http://localhost 사용
-      const redirectUri = isElectron ? 'http://localhost' : window.location.origin;
+      // redirect_uri 설정
+      // 환경 변수로 커스텀 redirect_uri 설정 가능
+      const customRedirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+      
+      let redirectUri: string;
+      if (customRedirectUri) {
+        // 커스텀 redirect_uri 사용 (단축 URL 등)
+        redirectUri = customRedirectUri;
+      } else if (isElectron) {
+        // Electron 앱에서는 기본적으로 http://localhost 사용
+        redirectUri = 'http://localhost';
+      } else {
+        // 웹 앱에서는 현재 origin 사용
+        redirectUri = window.location.origin;
+      }
       
       console.log('Google Login - isElectron:', isElectron, 'redirectUri:', redirectUri);
       
