@@ -7,6 +7,7 @@ const { spawn } = require('child_process');
 const store = new Store();
 
 let mainWindow;
+let backendProcess = null; // 백엔드 서버 프로세스
 
 function createWindow() {
   // 메인 윈도우 생성
@@ -21,7 +22,7 @@ function createWindow() {
       contextIsolation: true,
       enableRemoteModule: false,
     },
-    icon: path.join(__dirname, 'assets', 'icon.png'),
+    // icon: path.join(__dirname, 'assets', 'icon.png'), // 아이콘 파일이 없으면 주석 처리
     show: false, // 준비될 때까지 숨김
   });
 
@@ -35,10 +36,19 @@ function createWindow() {
   } else {
     // 프로덕션: 빌드된 React 앱 로드
     const indexPath = path.join(__dirname, 'renderer', 'index.html');
+    const fs = require('fs');
+    
+    // 파일 존재 확인
+    if (!fs.existsSync(indexPath)) {
+      console.error('파일을 찾을 수 없습니다:', indexPath);
+      mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>renderer/index.html 파일을 찾을 수 없습니다.</p><p>경로: ' + indexPath + '</p>');
+      return;
+    }
+    
     mainWindow.loadFile(indexPath).catch((err) => {
       console.error('파일 로드 실패:', err);
       // 오류 페이지 표시
-      mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>renderer/index.html 파일을 찾을 수 없습니다.</p>');
+      mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>오류: ' + err.message + '</p>');
     });
   }
   
