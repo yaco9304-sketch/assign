@@ -37,13 +37,16 @@ Netlify 대시보드에서 설정할 환경 변수:
      VITE_GOOGLE_CLIENT_ID=your-google-client-id
      ```
 
-5. **프록시 설정 (netlify.toml)**
-   - `netlify.toml` 파일의 백엔드 URL을 실제 백엔드 URL로 변경:
+5. **프록시 설정 (netlify.toml) - 선택사항**
+   - ⚠️ 이 단계는 **선택사항**입니다. 환경 변수로 API URL을 설정했다면 생략 가능합니다.
+   - 프록시를 사용하면 `/api/*` 경로를 백엔드로 자동 전달합니다.
+   - `netlify.toml` 파일을 열어서 백엔드 URL을 실제 URL로 변경:
      ```toml
      [[redirects]]
-       from = "/api/*"
-       to = "https://your-backend-url.onrender.com/:splat"
+     from = "/api/*"
+     to = "https://your-backend-url.onrender.com/:splat"
      ```
+   - 💡 **프록시를 사용하지 않으려면**: 이 단계를 건너뛰고 환경 변수만 설정하면 됩니다.
 
 6. **배포**
    - "Deploy site" 클릭
