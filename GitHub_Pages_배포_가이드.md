@@ -51,13 +51,22 @@ GitHub Secrets에 저장할 환경 변수:
    - "Deploy to GitHub Pages" 워크플로우 실행 확인
    - 빌드 완료 대기 (약 2-3분)
 
-#### 4단계: GitHub Pages 활성화
+#### 4단계: GitHub Pages 활성화 (⚠️ 필수!)
 
-1. **Settings → Pages**
-   - Source: "GitHub Actions" 선택
-   - 또는 "Deploy from a branch" → `gh-pages` 브랜치 선택
+**중요:** 이 단계를 먼저 완료하지 않으면 워크플로우가 실패합니다!
 
-2. **사이트 URL 확인**
+1. **Settings → Pages** 접속
+   - 리포지토리 Settings → 왼쪽 메뉴에서 "Pages" 클릭
+
+2. **Source 설정**
+   - "Source" 드롭다운에서 **"GitHub Actions"** 선택
+   - 저장하지 않아도 자동으로 저장됩니다
+
+3. **환경 확인**
+   - "Environments" 섹션에서 `github-pages` 환경이 생성되었는지 확인
+   - 없으면 워크플로우를 한 번 실행하면 자동 생성됩니다
+
+4. **사이트 URL 확인**
    - 배포 완료 후 URL 확인:
      - `https://username.github.io/repository-name`
      - 또는 커스텀 도메인 설정 시 해당 도메인
