@@ -96,13 +96,16 @@ export default function LoginPage() {
         // 이는 데스크톱 앱에서 가장 안정적인 방법
         redirectUri = 'http://localhost';
       } else {
-        // 웹 앱에서는 현재 origin + pathname 사용
-        // GitHub Pages의 경우 base path가 포함될 수 있음
-        redirectUri = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/') || window.location.origin;
-        // 로그인 페이지에서 호출되므로 /login을 제거하고 base path만 사용
-        if (redirectUri.endsWith('/login')) {
-          redirectUri = redirectUri.replace('/login', '');
-        }
+        // 웹 앱에서는 현재 origin 사용
+        // GitHub Pages의 경우 origin만 사용 (base path는 Google OAuth에서 처리하지 않음)
+        redirectUri = window.location.origin;
+        
+        // 디버깅: 실제 사용되는 redirect_uri 로그 출력
+        console.log('=== Google OAuth Redirect URI Debug ===');
+        console.log('window.location.origin:', window.location.origin);
+        console.log('window.location.pathname:', window.location.pathname);
+        console.log('Final redirectUri:', redirectUri);
+        console.log('이 값이 Google Cloud Console에 등록되어 있어야 합니다!');
       }
       
       console.log('Google Login - isElectron:', isElectron, 'redirectUri:', redirectUri);
