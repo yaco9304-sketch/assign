@@ -281,8 +281,67 @@ GitHub Actions 워크플로우 파일이 자동 생성되었습니다.
 - `vite.config.ts`의 `base` 경로 확인
 - `frontend/package-lock.json` 파일이 있는지 확인
 
-### 문제 2: 404 에러
-**증상:** 페이지 새로고침 시 404 에러
+### 문제 2: 404 에러 - "There isn't a GitHub Pages site here"
+
+**증상:** GitHub Pages 사이트에 접속했는데 404 에러가 표시됨
+
+**원인:**
+1. 잘못된 URL로 접속 (base path 누락)
+2. 배포가 아직 완료되지 않음
+3. GitHub Pages 설정이 제대로 되지 않음
+
+**해결:**
+
+#### 1. 올바른 URL로 접속 확인
+
+리포지토리 이름이 `assign`이므로 다음 URL로 접속해야 합니다:
+
+```
+https://yaco9304-sketch.github.io/assign
+```
+
+**⚠️ 주의:**
+- `https://yaco9304-sketch.github.io` (X) - base path 없음
+- `https://yaco9304-sketch.github.io/assign` (O) - base path 포함
+
+#### 2. 배포 상태 확인
+
+1. **Actions 탭 확인**
+   - GitHub 리포지토리 → Actions 탭
+   - "Deploy to GitHub Pages" 워크플로우가 성공적으로 완료되었는지 확인
+   - 초록색 체크 표시가 있어야 함
+
+2. **배포 완료 대기**
+   - 워크플로우가 실행 중이면 완료될 때까지 대기 (약 2-3분)
+   - 배포 완료 후 몇 분 더 기다린 후 다시 접속
+
+#### 3. GitHub Pages 설정 확인
+
+1. **Settings → Pages** 접속
+2. **"Your site is live at"** 섹션 확인
+   - 여기에 표시된 URL이 정확한지 확인
+   - URL이 표시되지 않으면 배포가 완료되지 않은 것
+
+3. **Source 설정 확인**
+   - "Source"가 "GitHub Actions"로 설정되어 있는지 확인
+
+#### 4. 수동으로 워크플로우 실행
+
+배포가 안 되었다면:
+
+1. Actions 탭 → "Deploy to GitHub Pages" 클릭
+2. "Run workflow" 버튼 클릭
+3. "Run workflow" 다시 클릭하여 실행
+4. 완료될 때까지 대기
+
+#### 5. 브라우저 캐시 삭제
+
+1. 브라우저 개발자 도구(F12) 열기
+2. 네트워크 탭 → "Disable cache" 체크
+3. 페이지 새로고침 (Ctrl+Shift+R 또는 Cmd+Shift+R)
+
+### 문제 3: 404 에러 - 페이지 새로고침 시
+**증상:** 페이지는 열리지만 새로고침하면 404 에러
 
 **해결:**
 - `404.html` 파일이 `gh-pages` 브랜치에 있는지 확인
