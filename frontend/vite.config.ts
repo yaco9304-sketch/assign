@@ -5,6 +5,10 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // GitHub Pages base path 설정
+  // 리포지토리 이름이 "assign"이므로 "/assign/"로 설정
+  // 루트 도메인(username.github.io)을 사용하는 경우 base: "/"로 변경
+  base: process.env.GITHUB_PAGES_BASE || "/assign/",
   plugins: [
     react(),
     VitePWA({

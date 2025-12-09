@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>학년 배정 시스템</title>
+    <script>
+      // GitHub Pages에서 SPA 라우팅을 위한 404.html
+      // 실제 경로로 리다이렉트
+      const path = window.location.pathname;
+      const base = '/assign/';
+      
+      // 현재 경로가 base로 시작하지 않으면 base를 추가
+      if (!path.startsWith(base)) {
+        window.location.replace(base + path.replace(/^\//, ''));
+      } else {
+        // base 경로가 있으면 index.html로 리다이렉트
+        window.location.replace(base + 'index.html');
+      }
+    </script>
+  </head>
+  <body>
+    <p>페이지를 불러오는 중...</p>
+  </body>
+</html>
+

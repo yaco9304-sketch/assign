@@ -80,3 +80,4 @@ try {
 console.log('🎉 모든 빌드 완료!');
 console.log('📦 실행 파일 위치: desktop-app/dist/');
 
+
