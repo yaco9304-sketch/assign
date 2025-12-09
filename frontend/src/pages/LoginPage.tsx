@@ -26,10 +26,24 @@ export default function LoginPage() {
     setError("");
     if (role === "admin") {
       try {
+        console.log("Admin login attempt - API URL:", api.defaults.baseURL);
         await login({ name: undefined, password, role });
         nav("/admin/dashboard");
       } catch (err: any) {
-        setError(err.response?.data?.detail || "로그인 실패");
+        console.error("Admin login error:", err);
+        console.error("Error details:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          code: err.code,
+        });
+        // 더 구체적인 오류 메시지 표시
+        const errorMessage = err.response?.data?.detail 
+          || err.response?.statusText 
+          || err.message 
+          || "로그인 실패";
+        setError(errorMessage);
       }
     }
   };
@@ -130,7 +144,19 @@ export default function LoginPage() {
             nav("/my-preference");
           } catch (err: any) {
             console.error("Backend error:", err);
-            setError(err.response?.data?.detail || "구글 로그인 실패");
+            // 상세한 오류 정보 로깅
+            console.error("Error details:", {
+              message: err.message,
+              response: err.response?.data,
+              status: err.response?.status,
+              statusText: err.response?.statusText,
+            });
+            // 더 구체적인 오류 메시지 표시
+            const errorMessage = err.response?.data?.detail 
+              || err.response?.statusText 
+              || err.message 
+              || "구글 로그인 실패";
+            setError(errorMessage);
           }
         },
       });
