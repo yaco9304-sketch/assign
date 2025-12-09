@@ -71,10 +71,20 @@ export default function LoginPage() {
       }
 
       // 데스크톱 앱 감지 (Electron)
-      const isElectron = window.navigator.userAgent.includes('Electron');
+      // 여러 방법으로 Electron 환경 감지
+      const isElectron = 
+        window.navigator.userAgent.includes('Electron') ||
+        // @ts-ignore
+        (window.electronAPI !== undefined) ||
+        window.location.protocol === 'file:' ||
+        window.location.hostname === '' ||
+        window.location.hostname === 'localhost';
       
       // redirect_uri 설정 (데스크톱 앱용)
+      // Electron 앱에서는 항상 http://localhost 사용
       const redirectUri = isElectron ? 'http://localhost' : window.location.origin;
+      
+      console.log('Google Login - isElectron:', isElectron, 'redirectUri:', redirectUri);
       
       // @ts-ignore
       const client = window.google.accounts.oauth2.initTokenClient({
