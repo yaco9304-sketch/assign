@@ -70,10 +70,17 @@ export default function LoginPage() {
         return;
       }
 
+      // 데스크톱 앱 감지 (Electron)
+      const isElectron = window.navigator.userAgent.includes('Electron');
+      
+      // redirect_uri 설정 (데스크톱 앱용)
+      const redirectUri = isElectron ? 'http://localhost' : window.location.origin;
+      
       // @ts-ignore
       const client = window.google.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: "openid profile email",
+        redirect_uri: redirectUri,
         callback: async (response: any) => {
           if (response.error) {
             setError(response.error_description || "구글 로그인이 취소되었습니다.");
