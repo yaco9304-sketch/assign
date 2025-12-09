@@ -1,5 +1,5 @@
 {
-  "name": "학년배정-데스크톱",
+  "name": "grade-assignment-desktop",
   "version": "1.0.0",
   "description": "학년 배정 시스템 데스크톱 앱",
   "main": "main.js",
