@@ -35,21 +35,28 @@ function createWindow() {
     mainWindow.webContents.openDevTools(); // 개발자 도구 열기
   } else {
     // 프로덕션: 빌드된 React 앱 로드
-    const indexPath = path.join(__dirname, 'renderer', 'index.html');
     const fs = require('fs');
+    const indexPath = path.join(__dirname, 'renderer', 'index.html');
     
     // 파일 존재 확인
-    if (!fs.existsSync(indexPath)) {
-      console.error('파일을 찾을 수 없습니다:', indexPath);
-      mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>renderer/index.html 파일을 찾을 수 없습니다.</p><p>경로: ' + indexPath + '</p>');
-      return;
+    try {
+      if (!fs.existsSync(indexPath)) {
+        console.error('파일을 찾을 수 없습니다:', indexPath);
+        console.error('__dirname:', __dirname);
+        console.error('renderer 경로:', path.join(__dirname, 'renderer'));
+        mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>renderer/index.html 파일을 찾을 수 없습니다.</p><p>경로: ' + indexPath + '</p>');
+        return;
+      }
+      
+      mainWindow.loadFile(indexPath).catch((err) => {
+        console.error('파일 로드 실패:', err);
+        // 오류 페이지 표시
+        mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>오류: ' + (err.message || err) + '</p>');
+      });
+    } catch (error) {
+      console.error('파일 로드 중 오류:', error);
+      mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>오류: ' + (error.message || error) + '</p>');
     }
-    
-    mainWindow.loadFile(indexPath).catch((err) => {
-      console.error('파일 로드 실패:', err);
-      // 오류 페이지 표시
-      mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>오류: ' + err.message + '</p>');
-    });
   }
   
   // 개발자 도구 열기 (프로덕션에서도 디버깅용)
