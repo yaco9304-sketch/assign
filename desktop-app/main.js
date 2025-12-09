@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
+const { spawn } = require('child_process');
 
 // 설정 저장소
 const store = new Store();
@@ -33,7 +34,18 @@ function createWindow() {
     mainWindow.webContents.openDevTools(); // 개발자 도구 열기
   } else {
     // 프로덕션: 빌드된 React 앱 로드
-    mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+    const indexPath = path.join(__dirname, 'renderer', 'index.html');
+    mainWindow.loadFile(indexPath).catch((err) => {
+      console.error('파일 로드 실패:', err);
+      // 오류 페이지 표시
+      mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>renderer/index.html 파일을 찾을 수 없습니다.</p>');
+    });
+  }
+  
+  // 개발자 도구 열기 (프로덕션에서도 디버깅용)
+  if (!isDev) {
+    // 프로덕션에서는 기본적으로 닫혀있지만, 필요시 Cmd+Option+I로 열 수 있음
+    // mainWindow.webContents.openDevTools();
   }
 
   // 윈도우가 준비되면 표시
@@ -167,8 +179,23 @@ app.whenReady().then(() => {
 
 // 모든 윈도우가 닫히면 (macOS 제외)
 app.on('window-all-closed', () => {
+  // 백엔드 서버 종료
+  if (backendProcess) {
+    backendProcess.kill();
+    backendProcess = null;
+  }
+  
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+// 앱 종료 시
+app.on('before-quit', () => {
+  // 백엔드 서버 종료
+  if (backendProcess) {
+    backendProcess.kill();
+    backendProcess = null;
   }
 });
 
