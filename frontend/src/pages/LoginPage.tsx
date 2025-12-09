@@ -96,8 +96,13 @@ export default function LoginPage() {
         // 이는 데스크톱 앱에서 가장 안정적인 방법
         redirectUri = 'http://localhost';
       } else {
-        // 웹 앱에서는 현재 origin 사용
-        redirectUri = window.location.origin;
+        // 웹 앱에서는 현재 origin + pathname 사용
+        // GitHub Pages의 경우 base path가 포함될 수 있음
+        redirectUri = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/') || window.location.origin;
+        // 로그인 페이지에서 호출되므로 /login을 제거하고 base path만 사용
+        if (redirectUri.endsWith('/login')) {
+          redirectUri = redirectUri.replace('/login', '');
+        }
       }
       
       console.log('Google Login - isElectron:', isElectron, 'redirectUri:', redirectUri);
