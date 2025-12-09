@@ -248,13 +248,38 @@ GitHub Actions 워크플로우 파일이 자동 생성되었습니다.
 
 **참고:** GitHub Enterprise를 사용하면 private 리포지토리에서도 GitHub Pages를 사용할 수 있습니다 (유료).
 
-### 문제 1: 빌드 실패
+### 문제 1: "You've hit your usage limit" 메시지
+
+**증상:** GitHub Actions 사용량 제한에 도달
+
+**원인:**
+- Private 리포지토리에서 월 2,000분 제한 초과
+- 또는 너무 많은 워크플로우 실행
+
+**해결:**
+1. **리포지토리를 public으로 변경** (가장 효과적)
+   - Settings → General → Danger Zone → Change visibility → Make public
+   - Public 리포지토리는 무제한 사용 가능
+
+2. **사용량 확인**
+   - Settings → Billing → Plans and usage
+   - Actions 사용량 확인
+
+3. **불필요한 워크플로우 실행 중지**
+   - 실패한 워크플로우가 계속 재시도되는 경우 취소
+   - Actions 탭에서 실행 중인 워크플로우 취소
+
+4. **다음 달까지 대기** (임시 해결책)
+   - 월 사용량이 리셋될 때까지 대기
+
+### 문제 2: 빌드 실패
 **증상:** GitHub Actions에서 빌드 실패
 
 **해결:**
-- Actions 탭에서 빌드 로그 확인
+- Actions 탭에서 실패한 워크플로우 클릭 → 로그 확인
 - GitHub Secrets에 환경 변수가 올바르게 설정되었는지 확인
 - `vite.config.ts`의 `base` 경로 확인
+- `frontend/package-lock.json` 파일이 있는지 확인
 
 ### 문제 2: 404 에러
 **증상:** 페이지 새로고침 시 404 에러
