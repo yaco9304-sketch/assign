@@ -36,27 +36,40 @@ function createWindow() {
   } else {
     // 프로덕션: 빌드된 React 앱 로드
     const fs = require('fs');
-    const indexPath = path.join(__dirname, 'renderer', 'index.html');
+    // asarUnpack로 renderer가 압축 해제되었을 수 있으므로 여러 경로 시도
+    const possiblePaths = [
+      path.join(__dirname, 'renderer', 'index.html'), // asarUnpack된 경우 (app.asar.unpacked/renderer)
+      path.join(process.resourcesPath, 'app.asar.unpacked', 'renderer', 'index.html'), // Resources/app.asar.unpacked/renderer
+      path.join(__dirname, '..', 'renderer', 'index.html'), // 상대 경로
+    ];
     
-    // 파일 존재 확인
-    try {
-      if (!fs.existsSync(indexPath)) {
-        console.error('파일을 찾을 수 없습니다:', indexPath);
-        console.error('__dirname:', __dirname);
-        console.error('renderer 경로:', path.join(__dirname, 'renderer'));
-        mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>renderer/index.html 파일을 찾을 수 없습니다.</p><p>경로: ' + indexPath + '</p>');
-        return;
+    let indexPath = null;
+    for (const testPath of possiblePaths) {
+      try {
+        if (fs.existsSync(testPath)) {
+          indexPath = testPath;
+          console.log('파일 찾음:', indexPath);
+          break;
+        }
+      } catch (e) {
+        // 계속 시도
       }
-      
-      mainWindow.loadFile(indexPath).catch((err) => {
-        console.error('파일 로드 실패:', err);
-        // 오류 페이지 표시
-        mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>오류: ' + (err.message || err) + '</p>');
-      });
-    } catch (error) {
-      console.error('파일 로드 중 오류:', error);
-      mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>오류: ' + (error.message || error) + '</p>');
     }
+    
+    if (!indexPath) {
+      console.error('renderer/index.html을 찾을 수 없습니다.');
+      console.error('시도한 경로:', possiblePaths);
+      console.error('__dirname:', __dirname);
+      console.error('process.resourcesPath:', process.resourcesPath);
+      mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>renderer/index.html 파일을 찾을 수 없습니다.</p><p>__dirname: ' + __dirname + '</p><p>resourcesPath: ' + process.resourcesPath + '</p>');
+      return;
+    }
+    
+    mainWindow.loadFile(indexPath).catch((err) => {
+      console.error('파일 로드 실패:', err);
+      // 오류 페이지 표시
+      mainWindow.loadURL('data:text/html,<h1>앱 로드 실패</h1><p>오류: ' + (err.message || err) + '</p>');
+    });
   }
   
   // 개발자 도구 열기 (프로덕션에서도 디버깅용)
