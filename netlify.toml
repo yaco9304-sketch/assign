@@ -1,0 +1,51 @@
+# Netlify 배포 설정
+
+[build]
+  # 빌드 디렉토리
+  base = "frontend"
+  # 빌드 명령어
+  command = "npm run build"
+  # 빌드 출력 디렉토리
+  publish = "frontend/dist"
+
+# 프록시 설정 (백엔드 API)
+# ⚠️ 실제 백엔드 URL로 변경하세요!
+# 예: https://your-backend.onrender.com
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-backend-url.onrender.com/:splat"
+  status = 200
+  force = true
+  headers = { X-From = "Netlify" }
+
+# SPA 라우팅 지원
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 헤더 설정
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# 정적 파일 캐싱
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
