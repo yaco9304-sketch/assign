@@ -130,3 +130,5 @@ Final redirectUri: https://yaco9304-sketch.github.io
 2. GitHub Secrets 업데이트
 3. 새 클라이언트 ID로 테스트
 
+
+

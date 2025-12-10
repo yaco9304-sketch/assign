@@ -123,3 +123,5 @@ console.log('Current pathname:', window.location.pathname);
 
 이 값들을 Google Cloud Console에 등록하세요.
 
+
+

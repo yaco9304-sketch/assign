@@ -645,6 +645,87 @@ def write_results_to_excel(wb: Workbook, assignments: List[Assignment], excluded
         stats_ws.column_dimensions[get_column_letter(col)].width = 20
 
 
+def add_execution_sheet(wb: Workbook, excel_path: str):
+    """배정 실행 시트 추가 (버튼 포함)"""
+    # 기존 시트 삭제 (있다면)
+    if "배정실행" in wb.sheetnames:
+        wb.remove(wb["배정실행"])
+    
+    ws = wb.create_sheet("배정실행", 0)  # 첫 번째 시트로 추가
+    
+    # 스타일 설정
+    title_font = Font(bold=True, size=16, color="366092")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    button_fill = PatternFill(start_color="70AD47", end_color="70AD47", fill_type="solid")
+    button_font = Font(bold=True, color="FFFFFF", size=12)
+    info_font = Font(size=10, color="666666")
+    
+    # 제목
+    ws.cell(2, 2, "학년 배정 자동화 시스템").font = title_font
+    ws.merge_cells("B2:F2")
+    
+    # 안내 문구
+    ws.cell(4, 2, "📋 사용 방법:")
+    ws.cell(5, 2, "1. 교사정보, 희망사항, 학년설정 시트에 데이터를 입력하세요.")
+    ws.cell(6, 2, "2. 아래 '배정 실행' 버튼을 클릭하거나 VBA 매크로를 실행하세요.")
+    ws.cell(7, 2, "3. 배정 결과는 '배정결과' 시트에 자동으로 생성됩니다.")
+    
+    for row in range(4, 8):
+        ws.cell(row, 2).font = info_font
+    
+    # 배정 연도 입력
+    ws.cell(10, 2, "배정 연도:")
+    ws.cell(10, 2).font = Font(bold=True)
+    year_cell = ws.cell(10, 3, datetime.now().year + 1)
+    year_cell.border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin"),
+    )
+    year_cell.alignment = Alignment(horizontal="center")
+    
+    # 버튼 영역 (시각적으로 버튼처럼 보이게)
+    button_row = 12
+    button_col = 2
+    button_cell = ws.cell(button_row, button_col, "▶ 배정 실행")
+    button_cell.fill = button_fill
+    button_cell.font = button_font
+    button_cell.alignment = Alignment(horizontal="center", vertical="center")
+    button_cell.border = Border(
+        left=Side(style="medium"),
+        right=Side(style="medium"),
+        top=Side(style="medium"),
+        bottom=Side(style="medium"),
+    )
+    ws.merge_cells(f"B{button_row}:D{button_row}")
+    ws.row_dimensions[button_row].height = 30
+    
+    # Python 스크립트 경로 저장 (숨김 셀)
+    script_path = os.path.abspath(__file__)
+    excel_dir = os.path.dirname(os.path.abspath(excel_path))
+    relative_script = os.path.relpath(script_path, excel_dir)
+    ws.cell(1, 1, f"SCRIPT_PATH:{relative_script}")  # 숨김 정보
+    
+    # VBA 매크로 사용 안내
+    ws.cell(15, 2, "💡 VBA 매크로 설정 방법:")
+    ws.cell(15, 2).font = Font(bold=True, size=11)
+    ws.cell(16, 2, "1. Alt+F11을 눌러 VBA 편집기를 엽니다.")
+    ws.cell(17, 2, "2. ThisWorkbook에 '엑셀_자동실행.bas' 파일의 코드를 붙여넣습니다.")
+    ws.cell(18, 2, "3. 저장 후 '배정 실행' 버튼을 클릭하면 자동으로 배정이 실행됩니다.")
+    
+    for row in range(16, 19):
+        ws.cell(row, 2).font = info_font
+    
+    # 열 너비 조정
+    ws.column_dimensions["A"].width = 1
+    ws.column_dimensions["B"].width = 20
+    ws.column_dimensions["C"].width = 15
+    ws.column_dimensions["D"].width = 15
+    ws.column_dimensions["E"].width = 15
+    ws.column_dimensions["F"].width = 15
+
+
 def create_template_excel(filename: str):
     """템플릿 엑셀 파일 생성"""
     wb = Workbook()
@@ -690,11 +771,81 @@ def create_template_excel(filename: str):
     for col in range(1, len(headers_settings) + 1):
         ws_settings.column_dimensions[get_column_letter(col)].width = 15
     
+    # 배정 실행 시트 추가
+    add_execution_sheet(wb, filename)
+    
     wb.save(filename)
     print(f"✅ 템플릿 파일 생성 완료: {filename}")
 
 
 # ==================== 메인 함수 ====================
+
+def process_excel_file(excel_path: str, year: Optional[int] = None):
+    """엑셀 파일 처리 (함수로 분리하여 VBA에서 호출 가능)"""
+    if year is None:
+        year = datetime.now().year + 1
+    
+    if not os.path.exists(excel_path):
+        raise FileNotFoundError(f"파일을 찾을 수 없습니다: {excel_path}")
+    
+    print(f"📖 엑셀 파일 읽는 중: {excel_path}")
+    wb = load_workbook(excel_path)
+    
+    # 배정 실행 시트에서 연도 읽기 시도
+    if "배정실행" in wb.sheetnames:
+        try:
+            ws_exec = wb["배정실행"]
+            year_cell_value = ws_exec.cell(10, 3).value
+            if year_cell_value and isinstance(year_cell_value, (int, float)):
+                year = int(year_cell_value)
+                print(f"📅 배정 실행 시트에서 연도 읽음: {year}")
+        except:
+            pass
+    
+    print("📋 교사 정보 읽는 중...")
+    teachers = read_teachers_from_excel(wb)
+    print(f"   - 총 {len(teachers)}명의 교사 정보를 읽었습니다.")
+    
+    print("📋 희망사항 읽는 중...")
+    prefs_by_name = read_preferences_from_excel(wb, year)
+    print(f"   - 총 {len(prefs_by_name)}명의 희망사항을 읽었습니다.")
+    
+    print("📋 학년 설정 읽는 중...")
+    settings = read_grade_settings_from_excel(wb, year)
+    print(f"   - 총 {len(settings)}개 학년의 설정을 읽었습니다.")
+    
+    print("🔄 배정 알고리즘 실행 중...")
+    try:
+        assignments, excluded, logs = run_assignment(teachers, settings, prefs_by_name, year)
+        print(f"   - 배정 완료: {len(assignments)}명")
+        print(f"   - 제외 대상: {len(excluded)}명")
+    except Exception as e:
+        print(f"❌ 배정 중 오류 발생: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
+    
+    print("💾 결과를 엑셀에 저장 중...")
+    write_results_to_excel(wb, assignments, excluded, year)
+    
+    # 원본 파일에 결과 저장 (배정결과 시트 추가)
+    wb.save(excel_path)
+    
+    # 별도 결과 파일도 생성
+    output_path = excel_path.replace(".xlsx", f"_배정결과_{year}.xlsx")
+    wb.save(output_path)
+    print(f"✅ 배정 완료! 결과 파일: {output_path}")
+    print(f"✅ 원본 파일에도 결과가 저장되었습니다: {excel_path}")
+    print("")
+    print("📊 배정 결과 요약:")
+    grade_counts: Dict[int, int] = {}
+    for assignment in assignments:
+        grade_counts[assignment.assigned_grade] = grade_counts.get(assignment.assigned_grade, 0) + 1
+    for grade in sorted(grade_counts.keys()):
+        print(f"   - {grade}학년: {grade_counts[grade]}명")
+    
+    return assignments, excluded
+
 
 def main():
     """메인 실행 함수"""
@@ -717,7 +868,15 @@ def main():
         return
     
     excel_path = sys.argv[1]
-    year = int(sys.argv[2]) if len(sys.argv) > 2 else (datetime.now().year + 1)
+    year = int(sys.argv[2]) if len(sys.argv) > 2 else None
+    
+    try:
+        process_excel_file(excel_path, year)
+    except Exception as e:
+        print(f"❌ 오류 발생: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
     
     if not os.path.exists(excel_path):
         print(f"❌ 파일을 찾을 수 없습니다: {excel_path}")
@@ -752,9 +911,14 @@ def main():
     print("💾 결과를 엑셀에 저장 중...")
     write_results_to_excel(wb, assignments, excluded, year)
     
+    # 원본 파일에 결과 저장 (배정결과 시트 추가)
+    wb.save(excel_path)
+    
+    # 별도 결과 파일도 생성
     output_path = excel_path.replace(".xlsx", f"_배정결과_{year}.xlsx")
     wb.save(output_path)
     print(f"✅ 배정 완료! 결과 파일: {output_path}")
+    print(f"✅ 원본 파일에도 결과가 저장되었습니다: {excel_path}")
     print("")
     print("📊 배정 결과 요약:")
     grade_counts: Dict[int, int] = {}

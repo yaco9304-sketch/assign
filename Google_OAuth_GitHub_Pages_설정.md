@@ -114,3 +114,5 @@ https://yaco9304-sketch.github.io/assign/  (GitHub Pages - 슬래시 포함)
 3. **시간 대기**: 변경 후 몇 분 기다린 후 다시 시도
 4. **캐시 삭제**: 브라우저 캐시 및 쿠키 삭제 후 재시도
 
+
+

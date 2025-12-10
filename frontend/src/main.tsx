@@ -26,10 +26,13 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// GitHub Pages base path 설정
+const basename = import.meta.env.BASE_URL || '/assign/';
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={qc}>
-      <BrowserRouter>
+      <BrowserRouter basename={basename}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/my-preference" element={<MyPreferencePage />} />

@@ -533,13 +533,25 @@ async def list_preferences(
   import logging
   logger = logging.getLogger(__name__)
   logger.info(f"제출 명단 조회 요청: year={year}")
-  
+
   # 전체 Preference 확인
   all_prefs_stmt = select(models.Preference).where(models.Preference.year == year)
   all_prefs_res = await session.execute(all_prefs_stmt)
   all_prefs = all_prefs_res.scalars().all()
   logger.info(f"해당 연도의 전체 Preference 수: {len(all_prefs)}")
-  
+
+  # 각 Preference의 teacher_id 확인
+  for pref in all_prefs:
+    logger.info(f"Preference ID={pref.id}, teacher_id={pref.teacher_id}")
+    # 해당 teacher가 존재하는지 확인
+    teacher_stmt = select(models.Teacher).where(models.Teacher.id == pref.teacher_id)
+    teacher_res = await session.execute(teacher_stmt)
+    teacher = teacher_res.scalars().first()
+    if teacher:
+      logger.info(f"  -> Teacher 존재: id={teacher.id}, name={teacher.name}")
+    else:
+      logger.warning(f"  -> Teacher 없음! teacher_id={pref.teacher_id}에 해당하는 Teacher 레코드가 DB에 없습니다.")
+
   stmt = (
     select(
       models.Preference.id,
@@ -558,6 +570,7 @@ async def list_preferences(
   )
   res = await session.execute(stmt)
   rows = res.all()
+  logger.info(f"JOIN 후 결과 수: {len(rows)}")
   
   result = [
     {

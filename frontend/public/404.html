@@ -6,21 +6,31 @@
     <title>학년 배정 시스템</title>
     <script>
       // GitHub Pages에서 SPA 라우팅을 위한 404.html
-      // 실제 경로로 리다이렉트
-      const path = window.location.pathname;
-      const base = '/assign/';
-      
-      // 현재 경로가 base로 시작하지 않으면 base를 추가
-      if (!path.startsWith(base)) {
-        window.location.replace(base + path.replace(/^\//, ''));
-      } else {
-        // base 경로가 있으면 index.html로 리다이렉트
-        window.location.replace(base + 'index.html');
-      }
+      // 현재 경로를 유지하면서 index.html로 리다이렉트
+      (function() {
+        const path = window.location.pathname;
+        const search = window.location.search;
+        const hash = window.location.hash;
+        const base = '/assign/';
+        
+        // 현재 경로가 base로 시작하는지 확인
+        if (path.startsWith(base)) {
+          // base 경로가 있으면 index.html로 리다이렉트
+          // React Router가 브라우저 히스토리를 통해 경로를 처리할 수 있도록 함
+          const redirectUrl = base + 'index.html' + search + hash;
+          // 현재 경로를 히스토리에 저장한 후 index.html로 리다이렉트
+          window.history.replaceState({}, '', path + search + hash);
+          window.location.replace(redirectUrl);
+        } else {
+          // base 경로가 없으면 base를 추가한 후 index.html로 리다이렉트
+          window.location.replace(base + 'index.html' + search + hash);
+        }
+      })();
     </script>
   </head>
   <body>
     <p>페이지를 불러오는 중...</p>
   </body>
 </html>
+
 
